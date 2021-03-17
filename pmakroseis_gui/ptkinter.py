@@ -118,6 +118,7 @@ class MakroseisGUI(Frame):
         self.create_button1(ico_usrmanual_ , self.help_usrmanual_, toolbar, sh_usrmanual)
         toolbar.pack(side=TOP, fill=X)
 
+
     def change_status_bar1(self, status, status_bar):
         self.the_status = status
         if status == self.SBC_st:
