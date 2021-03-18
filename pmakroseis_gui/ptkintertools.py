@@ -39,8 +39,30 @@ def get_screen_size(tkinter_Tk)-> (int, int):
     the_screen_height = tkinter_Tk.winfo_screenheight()
     return the_screen_width, the_screen_height
 
+def center_form_positioning(scr_w: int, scr_h: int, pr_width: int, pr_height:int)-> (int, int, int, int):
+    """
+    Позиционирование любой формы по центру экрана
+    return: параметры w_, h_, add_width_, add_height_ для root.geometry("w_xh_+add_width_+add_height_")
+    """
+    add_width_:int
+    add_height_:int
+    if pr_width>=scr_w:
+        add_width_ = 0
+        w_ = scr_w
+    else:
+        add_width_ = (scr_w-pr_width) // 2
+        w_ = pr_width
 
-def mainform_positioning(tkinter_Tk, pr_width: int, pr_height:int)-> (int, int, int, int):
+    if pr_height>=scr_h:
+        add_height_ = 0
+        h_=scr_h
+    else:
+        add_height_ = round((scr_h-pr_height) / 2.5)
+        h_ = pr_height
+    return w_, h_, add_width_, add_height_
+
+
+def mainform_positioning(tkinter_Tk, pr_width: int, pr_height:int)-> (int, int, int, int, int, int):
     """
     Позиционирование главной формы по центру экрана
     return: параметры w_, h_, add_width_, add_height_ для root.geometry("w_xh_+add_width_+add_height_")
@@ -61,7 +83,7 @@ def mainform_positioning(tkinter_Tk, pr_width: int, pr_height:int)-> (int, int, 
     else:
         add_height_ = round((scr_h-pr_height) / 2.5)
         h_ = pr_height
-    return w_, h_, add_width_, add_height_
+    return scr_w, scr_h, w_, h_, add_width_, add_height_
 
 
 def root_geometry_string(form_w_:int, form_h_:int, x:int, y:int)-> str:

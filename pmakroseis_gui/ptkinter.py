@@ -1,7 +1,8 @@
 from tkinter import *
 from tkinter import messagebox as mb
 from tkinter import filedialog as fd
-from tkinter import scrolledtext as st
+from tkinter import scrolledtext
+from tkinter.constants import END
 
 from typing import Any
 import Pmw
@@ -21,6 +22,9 @@ import pfile, pinp_proc
 
 p_width:int = 1400 # ширина окна программы
 p_height:int = 900  # высота окна программы
+
+view_inf_fw = 1150 # ширина окна проcмотра inf-файла
+view_inf_fh = 400 # высота окна проcмотра inf-файла
 
 vf_width:int = 700 # ширина окна просмотра
 vf_height:int = 700  # высота окна программы
@@ -63,16 +67,21 @@ class MakroseisGUI(Frame):
     fn_inf = ''
     dn_current_dir=''
     dn_current_dat_dir=''
+
+    scr_w = 0 # ширина экрана
+    scr_h = 0 # высота экрана
     # Константы меня
     def __init__(self, main):
         super().__init__(main)
+        # Строка статуса
+        # https://www.delftstack.com/ru/tutorial/tkinter-tutorial/tkinter-status-bar/
         # the_status_bar_label1   # 0 - Начата работа программы        # 1 - Данные введены
                                   # 2 - Вычисление закончено           # 3 - Вычисление прервано
         self.the_status_bar_label1 = status_bar_label(status_bar = Label(main, text=" Программа запущена ", bd=1, relief=SUNKEN, anchor=W), the_status=0)
         self.the_status_bar_label2 = status_bar_label(status_bar = Label(main, text="                    ", bd=1, relief=SUNKEN, anchor=W), the_status=0)
         self.the_status_bar_label3 = status_bar_label(status_bar = Label(main, text="                    ", bd=1, relief=SUNKEN, anchor=W), the_status=0)
         main.title(win_name)
-        (form_w_, form_h_, addx, addy) = mainform_positioning(main, p_width, p_height)
+        (self.scr_w, self.scr_h, form_w_, form_h_, addx, addy) = mainform_positioning(main, p_width, p_height)
         # main.geometry(root_geometry_string_auto(main, p_width, p_heiht)) # 1920x1080 мой монитор
         main.geometry(root_geometry_string(form_w_, form_h_, addx, addy))
         # Python Tkinter, как запретить расширять окно программы на полный экран?
@@ -80,6 +89,13 @@ class MakroseisGUI(Frame):
         main.resizable(width=False, height=False)
         main.config(menu=self.create_menu())
         main.iconbitmap(ico_progr)
+
+        # разлчиные варианты выхода
+        # https://fooobar.com/questions/83280/how-do-i-handle-the-window-close-event-in-tkinter
+        main.protocol("WM_DELETE_WINDOW", self.on_closing)
+        main.bind('<Escape>', self.btn_esc)
+
+
         # self.the_status_bar_label1.status_bar.pack(side=LEFT, fill=X)
         # self.the_status_bar_label2.status_bar.pack(side=LEFT, fill=X)
         #-------- Создание Status bar
@@ -95,17 +111,20 @@ class MakroseisGUI(Frame):
         # http://pmw.sourceforge.net/doc/Balloon.html
         self.balloon = Pmw.Balloon(main)
         self.create_tool_bar(main)
-        # toolbar = Frame(main, bd=1, relief=RAISED)
-        # self.create_button1('E:\Work_Lang\Python\PyCharm\Tkinter\Ico\exit.png', self.command1, toolbar)
-        # self.create_button1('E:\Work_Lang\Python\PyCharm\Tkinter\Ico\Info.png', self.command2, toolbar)
-        # self.create_button1('E:\Work_Lang\Python\PyCharm\Tkinter\Ico\Ball1.png', self.command3, toolbar)
-        # toolbar.pack(side=TOP, fill=X)
+        self.scrolledtext_win1 = self.create_scrolledtext_win(main)
 
         # Определяем текущую папку с программой https://ru.stackoverflow.com/questions/535318/Текущая-директория-в-python
         self.dn_current_dir =os.getcwd()
         self.dn_current_dat_dir = "\\".join([self.dn_current_dir, dat_dir])
         # print(self.dn_current_dir)
+        # self.creattxt = scrolledtext.ScrolledText
 
+    def on_closing(self):
+        sys.exit(0)
+
+    def btn_esc(self, event):
+        sys.exit(0)
+        # root.bind('<Escape>', btn_esc)
 
     def create_tool_bar(self, main):
         toolbar = Frame(main, bd=1, relief=RAISED)
@@ -118,6 +137,31 @@ class MakroseisGUI(Frame):
         self.create_button1(ico_usrmanual_ , self.help_usrmanual_, toolbar, sh_usrmanual)
         toolbar.pack(side=TOP, fill=X)
 
+    # Всплывающие окна   https://pythonru.com/uroki/vsplyvajushhie-okna-tkinter-11
+    # 2020_Tkinter Программирование на GUI Python_Шапошникова.pdf  11. Окна, стр. 48, 86
+    # tkinter, Усложнение диалогов window_09.py http://www.russianlutheran.org/python/nardo/nardo.html
+    # https://fooobar.com/questions/14054375/grabset-in-tkinter-window
+
+    def create_scrolledtext_win(self, main):
+
+        # https://ru.stackoverflow.com/questions/791876/Отображение-виджетов-в-tkinter-скрыть-и-вернуть-обратно
+        scrolledtext_frame = Frame(main, bd=2)
+        # frame1.pack(fill='both', expand='yes')
+        scrolledtext_frame.pack(side=TOP, fill=X)
+        scrolledtext_win = scrolledtext.ScrolledText(scrolledtext_frame, wrap=WORD,  width=20, height=10)
+        scrolledtext_win.pack(padx=10, pady=10, fill=BOTH, expand=True)
+        scrolledtext_win.pack_forget()
+        scrolledtext_win.insert(INSERT,
+                        """\
+                        Integer posuere erat a ante venenatis dapibus.
+                        Posuere velit aliquet.
+                        Aenean eu leo quam. Pellentesque ornare sem.
+                        Lacinia quam venenatis vestibulum.
+                        Nulla vitae elit libero, a pharetra augue.
+                        Cum sociis natoque penatibus et magnis dis.
+                        Parturient montes, nascetur ridiculus mus.
+                        """)
+        return scrolledtext_win
 
     def change_status_bar1(self, status, status_bar):
         self.the_status = status
@@ -189,6 +233,7 @@ class MakroseisGUI(Frame):
         if the_ext=='.inf':
             ext_type = 'i'
             good_new_data = self.input_from_inf(fn_dat)
+            if good_new_data: self.fn_inf = fn_dat
         elif the_ext=='.txt':
             ext_type = 't'
             good_new_data = self.input_from_txt(fn_dat)
@@ -223,18 +268,6 @@ class MakroseisGUI(Frame):
 
 
     def view_file(self, fname:str):
-        # (form_w_, form_h_, addx, addy) = mainform_positioning(self, p_width, p_height)
-        # # main.geometry(root_geometry_string_auto(main, p_width, p_heiht)) # 1920x1080 мой монитор
-        # self.geometry(root_geometry_string(form_w_, form_h_, addx, addy))
-        # # Python Tkinter, как запретить расширять окно программы на полный экран?
-        # # https://otvet.mail.ru/question/191704214
-        # self.self.resizable(width=False, height=False)
-        #
-        #
-        #
-        # txt = st.ScrolledText(window, width=40, height=10)
-        # txt.insert(INSERT, 'Текстовое поле')
-        # txt.grid(column=0, row=0)
         pass
 
     def input_txt(self):
@@ -243,25 +276,35 @@ class MakroseisGUI(Frame):
     def input_xlsx(self):
         pass
 
-    def view_inf(self):
+    def f_view_inf(self)->None:
+        f = open(self.fn_inf , 'r')
+        s = f.read()
+        if self.fn_inf=='':
+            mb.showerror(s_error, sf_finfni)
+        else:
+            (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_inf_fw, view_inf_fh)
+            self.dialog = c_view_txt(self.master, sf_vinf, root_geometry_string(form_w_, form_h_, addx, addy))
+            self.dialog.go(s.encode('cp1251').decode('utf-8'))
+            print(type(s))
+        f.close()
 
+    def f_view_txt(self):
         pass
 
-    def view_txt(self):
+    def f_view_xlsx(self):
         pass
 
-    def view_xlsx(self):
-        pass
-
-    def view_par(self):
+    def f_view_par(self):
         pass
         # self.change_status_bar1(self.SBC_fvpar, self.the_status_bar_label1.status_bar)
 
 
-
     def file_exit_(self):
-        # https: // ru.stackoverflow.com / questions / 459170 /
-        sys.exit(0)
+        # https://ru.stackoverflow.com/questions/459170
+        print('self.destroy() 1')
+        self.destroy()
+        print('self.destroy() 2')
+        # sys.exit(0)
 
     #---- Подменю Расчет
     def calc_calc_(self):
@@ -287,9 +330,9 @@ class MakroseisGUI(Frame):
         #---- Подменю Файл
         file_menu = Menu(tearoff=0) #font=("Verdana", 13)
         file_menu.add_command(label=sf_input, command=self.file_open_)
-        file_menu.add_command(label=sf_vinf , command=self.view_inf)
+        file_menu.add_command(label=sf_vinf , command=self.f_view_inf)
         file_menu.add_command(label=sf_vdat)
-        file_menu.add_command(label=sf_vpar, command=self.view_par)
+        file_menu.add_command(label=sf_vpar, command=self.f_view_par)
         file_menu.add_command(label=sf_vimap)
         file_menu.add_separator()
         file_menu.add_command(label=sf_exit, command=self.file_exit_)
@@ -317,17 +360,38 @@ class MakroseisGUI(Frame):
         return main_menu
 # ------------ class MakroseisGUI -------- END
 
-def btn_esc(event):
-    sys.exit(0)
+class c_view_txt:
+    def __init__(self, master, win_title: str, the_root_geometry_string: str):
+        self.slave = Toplevel(master)
+        self.slave.iconbitmap(ico_progr)
+        self.slave.title(win_title)
+        self.slave.geometry(the_root_geometry_string)
+        self.frame = Frame(self.slave)
+        self.frame.pack(side=BOTTOM)
+        # Python - Tkinter Text
+        # https://www.tutorialspoint.com/python/tk_text.htm
+        self.text = Text(self.slave, background='white', exportselection=0)  #
+        self.text.pack(side=TOP, fill=BOTH, expand=YES)
+
+    def go(self, myText=''):
+        self.text.insert('0.0', myText)
+        self.newValue = None
+        self.slave.grab_set()
+        self.slave.focus_set()
+        self.slave.wait_window()
 
 
-# Строка статуса
-# https://www.delftstack.com/ru/tutorial/tkinter-tutorial/tkinter-status-bar/
+# ------------ class MakroseisGUI -------- END
+
+
+# def btn_esc(event):             ## ========= Выход
+#     sys.exit(0)
+#     # root.bind('<Escape>', btn_esc)
 
 def the_program() -> None:
     #----- Инициализация, начальные установки окна
     root = Tk()
-    root.bind('<Escape>', btn_esc)
+#   root.bind('<Escape>', btn_esc)  ## ========= Выход
     Makroseis = MakroseisGUI(root)
     root.mainloop()
 
