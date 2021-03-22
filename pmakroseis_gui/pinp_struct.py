@@ -15,6 +15,9 @@ import pathlib
 from pfunct import *
 from pstring import *
 from pmain_proc import *
+from dataclasses import dataclass
+from tkinter import messagebox as mb
+from ptkinter_menu_proc import *
 
 test_mode = True  # тестовый режим
 makroseis_folder: str = r"Work_Lang\Python\PyCharm\Makroseis"
@@ -35,10 +38,10 @@ is_txt_res_file: bool = False
 a_def = 1.5;      min_a = 0.001;  max_a = 1000.0
 b_def = 3.17;     min_b = 0.001;  max_b = 1000.0
 c_def = 2.71;     min_c = 0.001;  max_c = 1000.0
-min_m = 0.0;      max_m = 10.0
-min_lat = -90.0;  max_lat = 90.0
-min_lon = -180.0; max_lon = 180.0
-min_dep = 0.05;   max_dep = 300
+min_m = 0.0;      max_m = 10.0     # магнитуда
+min_lat = -90.0;  max_lat = 90.0   # широта , градусы десятичные
+min_lon = -180.0; max_lon = 180.0  # долгота, градусы десятичные
+min_dep = 0.05;   max_dep = 300    # глубина, rv
 lin_coeff = 8   # коэффициент для барьерной функции
 
 # начальное периближение для минимизации - магнитуда, глубина
@@ -56,8 +59,9 @@ inf_fname_def_auto = 'точки_ввод_AUTO.inf'
 
 # What is the maximum float in Python? == sys.float_info.max
 # https://stackoverflow.com/questions/3477283/what-is-the-maximum-float-in-python
-# пустой
-inf_empydefdict = dict(name_sq='', fdat_name='',  # название площади, имя файла данных
+
+# пустой словрь для данных из inf-файла
+empty_inf_dict = dict(name_sq='', fdat_name='',  # название площади, имя файла данных
                        a=float('nan'), b=float('nan'), c=float('nan'),
                        # коэффициенты a, b, c макросейсмического уравнения
                        min_mag=float('nan'), max_mag=float('nan'),  # минимальная и максимальная магнитуда
@@ -71,6 +75,15 @@ inf_empydefdict = dict(name_sq='', fdat_name='',  # название площа�
                        finf_name='', # внутреняя информация - имя inf-файла
                        npoint=float('nan') # внутреняя информация - число точек в файле *.txt или xlsx
                        )
+
+# пустой словрь для параметров вычисления
+@dataclass
+class empty_calc_class:
+    lin_coeff: int   # коэффициент для барьерной функции
+    max_num_iter: int
+    num_iter: int
+    calc_status: bool # как завершено
+
 
 # Файл тестовый
 inf_defdict = dict(name_sq='Новозаречный', fdat_name=txtfname_def,  # название площади, имя файла данных
@@ -144,6 +157,7 @@ def get_lim_magn_lat_lon_dep(num_el: int) -> (float, float, float, float, float,
     return min_mag_, max_mag_, min_lat_, max_lat_, min_lon_, max_lon_, min_dep_, max_dep_
 
 
+#
 def print_dat_struct() -> None:
     print(dat_struct)
 
@@ -171,22 +185,26 @@ def control_curr_dict(curr_dict: dict) -> bool:
     full_file_name: str = "\\".join([curr_dict["work_dir"], curr_dict["fdat_name"]])
     path = pathlib.Path(full_file_name)
     if not path.exists():
-        print('путь к dat-файлу не существует = ', full_file_name)
+        print(ss_fdfpne, full_file_name) # 'путь к dat-файлу не существует = '
+        mb.showerror(s_error, ss_fdfpne + full_file_name)
         return False
     if not path.is_file():
-        print('dat-файл не существует = ', full_file_name)
+        print(ss_fdfne, full_file_name) # 'dat-файл не существует = '
+        mb.showerror(s_error, ss_fdfne + full_file_name)
         return False
+
     # Далее проверки на попадание в диапазон
     int_a = dat_in_diap(curr_dict["a"], min_a, max_a)
     int_b = dat_in_diap(curr_dict["b"], min_b, max_b)
     int_c = dat_in_diap(curr_dict["c"], min_c, max_c)
     if not (int_a and int_b and int_c):
-        print('Ошибка в коэффициентах макросейсмического уравнения')
+        print(ss_fmsee) # 'Ошибка в коэффициентах макросейсмического уравнения'
+        mb.showerror(s_error,ss_fmsee)
         return False
     int_m = dat2_in_diap(curr_dict["min_mag"], curr_dict["max_mag"], min_m, max_m)
     if not int_m:
-        print('Ошибка в диапазоне магнитуд')
-        # print(curr_dict["min_mag"], curr_dict["max_mag"], min_m, max_m)
+        print(ss_fmde) # 'Ошибка в диапазоне магнитуд'
+        mb.showerror(s_error,ss_fmsee)
         return False
     int_lat = dat2_in_diap(curr_dict["min_lat"], curr_dict["max_lat"], min_lat, max_lat)
     if not int_lat:
@@ -218,12 +236,12 @@ def input_inf(fname, is_view=False) -> (bool, object):
     # https://askdev.ru/q/numpy-dobavit-stroku-v-massiv-20857/
     file_exist: bool = os.path.isfile(fname)
     if not file_exist:
-        return file_exist, inf_empydefdict
+        return file_exist, empty_inf_dict
     else:
         f = open(fname, 'r')
         all_lines = f.read().splitlines()  # разделяет строку по символу переноса строки \n. Возвращает список(list)
         nrow1 = len(all_lines)  # вместе со строкой заголовков
-        curr_dict = copy.deepcopy(inf_empydefdict)
+        curr_dict = copy.deepcopy(empty_inf_dict)
         for i in range(nrow1):
             # Кракозябры в PyCharm
             # https://python.su/forum/topic/27557/
@@ -245,29 +263,37 @@ def input_inf(fname, is_view=False) -> (bool, object):
                 (curr_dict["min_lon"], curr_dict["max_lon"]) = work_with_line2dat(part_lines[0].strip())
             elif i == 6:
                 (curr_dict["min_dep"], curr_dict["max_dep"]) = work_with_line2dat(part_lines[0].strip())
-            elif i == 7:
+            elif i == 7: # начальное приближение кооординаты
                 s2 = part_lines[0].strip()
                 n = num_words_in_string(s2)
-                if n==2:
+                if n==2:     # если 2 числа, то координаты явно указаны.
                     (curr_dict["ini_lat"], curr_dict["ini_lon"]) = work_with_line2dat(s2)
                     curr_dict["calc_ini"] = False
-                elif n==1:
+                elif n==1:   # если 1 число, то указано по скольки координатам брать среднее
                     dd:float = float(re.sub(r'\D', '', s2))
                     curr_dict["calc_ini"] = True
                     curr_dict["ini_lat"] = -dd
                     curr_dict["ini_lon"] = -dd
-                else:
+                else: # не 1 или 2 числа
                     curr_dict["calc_ini"] = True
                     curr_dict["ini_lat"] = -1
                     curr_dict["ini_lon"] = -1
+            elif i == 8: # добавленная новая строка с начльным приближением по магнитуде и глубине
+                s2 = part_lines[0].strip()
+                n = num_words_in_string(s2)
+                (curr_dict["ini_mag"], curr_dict["ini_dep"]) = work_with_line2dat(part_lines[0].strip())
 
     # Запоминаем путь к файлу данных
         # https://python-scripts.com/pathlib
         curr_dict["work_dir"] = str(pathlib.Path(fname).parent)
         curr_dict["finf_name"] = str(pathlib.Path(fname).name)
     # начальное периближение для минимизации - магнитуда, глубина
-        curr_dict["ini_mag"] = ini_mag
-        curr_dict["ini_dep"] = ini_dep
+    #    curr_dict["ini_mag"] = ini_mag
+    #    curr_dict["ini_dep"] = ini_dep
+        if curr_dict["ini_mag"] == nan:
+            curr_dict["ini_mag"] = ini_mag
+        if curr_dict["ini_dep"] == nan:
+            curr_dict["ini_dep"] == ini_dep
         if is_view: print(curr_dict)
         return file_exist, curr_dict
 

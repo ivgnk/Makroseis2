@@ -103,22 +103,22 @@ def root_geometry_string_auto(tkinter_Tk, form_w_:int, form_h_)-> str:
     return s
 
 # ---------------------- Тесты -------------------
-def test_get_screen_size(tkinter_Tk)-> None:
-    (screen_width, screen_height) = get_screen_size(tkinter_Tk)
-    print('screen_width = ', screen_width)
-    print('screen_height = ',screen_height)
-
-
-def all_test():
-    root = Tk()
-    test_get_screen_size(root)
-    form_w_: int=1400
-    form_h_: int=900
-    print('1-этапный расчет = ',root_geometry_string_auto(root, form_w_, form_h_))
-
-    (form_w_, form_h_, addx, addy) = mainform_positioning(root, form_w_, form_h_)
-    s:str=root_geometry_string(form_w_, form_h_, addx, addy)
-    print('2-этапный расчет = ',s)
+# def test_get_screen_size(tkinter_Tk)-> None:
+#     (screen_width, screen_height) = get_screen_size(tkinter_Tk)
+#     print('screen_width = ', screen_width)
+#     print('screen_height = ',screen_height)
+#
+#
+# def all_test():
+#     root = Tk()
+#     test_get_screen_size(root)
+#     form_w_: int=1400
+#     form_h_: int=900
+#     print('1-этапный расчет = ',root_geometry_string_auto(root, form_w_, form_h_))
+#
+#     (form_w_, form_h_, addx, addy) = mainform_positioning(root, form_w_, form_h_)
+#     s:str=root_geometry_string(form_w_, form_h_, addx, addy)
+#     print('2-этапный расчет = ',s)
 
 # all_test()
 # test_get_screen_size()

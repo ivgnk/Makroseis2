@@ -12,8 +12,8 @@ import numba
 from scipy.optimize import minimize
 import copy
 import openpyxl
-from psort import *
-from pfit import *
+# from psort import *
+# from pfit import *
 
 log_file_name: str
 gran = 0.001 # 0.001% изменения функции по абсолютной величине

@@ -63,6 +63,7 @@ from pfile import *
 from pstring import *
 from pinp_struct import *
 from pnumpy import *
+from tkinter import messagebox as mb
 
 # https://ru.stackoverflow.com/questions/320292/Проблема-с-заменой-слеша-в-пути-на-python
 
@@ -97,19 +98,21 @@ def prepare_input_filename(inf_input:bool, txt_input: bool, is_view: bool = Fals
             res_file_name = gfn(testxls_filename)+res_
             print('res_file_name = ', res_file_name)
     else: # работа
-        print('не сделано')
+        # print(ss_uc) # 'не сделано'
+        mb.showerror(s_error, ss_uc)
         sys.exit()
 
     full_file_name: str = "\\".join([curr_folder, datfolder, test_filename])
     full_res_file_name =  "\\".join([curr_folder, datfolder, res_file_name])
     path = pathlib.Path(full_file_name)
     if not path.exists():
-        print('путь не существует = ', full_file_name)
+        # print(ss_fpne, full_file_name) # 'путь не существует = '
+        mb.showerror(s_error, ss_fpne + full_file_name)
     if not path.is_file():
-        print('файл не существует = ', full_file_name)
-    else:
-        pass # все нормально
-    if is_view: print('full_file_name = ', full_file_name)
+        # print('файл не существует = ', full_file_name) # 'файл не существует = '
+        mb.showerror(s_error, ss_ffne_ + full_file_name)
+
+    # if is_view: print('full_file_name = ', full_file_name)
     return (full_file_name, full_res_file_name)
 # --------------- def prepare_datinput_filename()
 

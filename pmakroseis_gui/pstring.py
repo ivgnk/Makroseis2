@@ -8,16 +8,16 @@
 # ------------------------------
 import re
 
+
 def print_string(the_list) -> None:
     print(len(the_list))
     for stri in the_list:
         print(stri, end=' ')
     print('+')
 
+
 def num_words_in_string(s: str) -> int:
     return len(re.split('\s+', s))
-
-
 
 
 # print(re.sub(r'\D', '', 'Fjkoweuqe -1245 654lfr'))

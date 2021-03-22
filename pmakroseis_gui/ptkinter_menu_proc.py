@@ -5,7 +5,9 @@
 Released under GNU Public License (GPL)
 email igenik@rambler.ru
 """
-#-- Значки и иконки
+# Файл ptkinter_menu_proc
+
+# -- Значки и иконки
 ico_progr = r'graphics\Земл144.ico'
 ico_file_open_ = r'graphics\open_73704.png'
 ico_calc_ = r'graphics\play_22349.png'
@@ -13,13 +15,13 @@ ico_resmap_ = r'graphics\map_54390.png'
 ico_resgraph_ = r'graphics\chart_37129_2.png'
 ico_usrmanual_ = r'graphics\text_81214_2.png'
 
-win_name:str= "Макросейсмика" # название окна программы
+win_name: str = "Макросейсмика"  # название окна программы
 
 usr_manual_fn = r'!Doc\Макросейсмика_РукПользователя_2021_1_1.docx'
-ini_fn = 'makro_seis.ini' # текстовый файл с текущими параметрами
+ini_fn = 'makro_seis.ini'  # текстовый файл с текущими параметрами
 dat_dir = 'dat'
 
-#-- Для подменю "Файл"
+# -- Для подменю "Файл"
 sf_input = "Открыть..."
 sf_vinf = "Просмотр inf-файла"
 sf_vdat = "Просмотр txt/xlsx-файла"
@@ -30,17 +32,25 @@ sf_exit = "Выход"
 ss_fdi = "Данные введены"
 ss_fdni = "Данные не введены"
 ss_fnsf = "Не поддерживаемый формат файлов"
+ss_fdfpne = 'путь к dat-файлу не существует = '
+ss_fdfne = 'dat-файл не существует = '
+ss_fpne = 'путь не существует = '
+ss_ffne_ = 'файл не существует = '
 
-#-- Для подменю "Файл"
+ss_fmsee = 'Ошибка в коэффициентах макросейсмического уравнения'
+ss_fmde = 'Ошибка в диапазоне магнитуд'
+
+ss_uc = 'не сделано'
+# -- Для подменю "Файл"
 s_error = "Ошибка"
 sf_ferror = "Ошибка в файле"
 sf_finfni = "inf-файл не введен".center(30)
 sf_err_ext = ss_fnsf.center(40)
 
-#-- Для подменю "Расчет"
+# -- Для подменю "Расчет"
 
 
-#-- Для подменю "Помощь"
+# -- Для подменю "Помощь"
 sh_help = "Справка"
 sh_about = "О программе"
 sh_about1 = 'Программа "Макросейсмика"'.center(40) + "\n" +\

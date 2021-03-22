@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import messagebox as mb
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
-from tkinter.constants import END
+# from tkinter.constants import END
 
 from typing import Any
 import Pmw
@@ -277,16 +277,16 @@ class MakroseisGUI(Frame):
         pass
 
     def f_view_inf(self)->None:
-        f = open(self.fn_inf , 'r')
-        s = f.read()
         if self.fn_inf=='':
             mb.showerror(s_error, sf_finfni)
         else:
+            f = open(self.fn_inf, 'r')
+            s = f.read()
             (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_inf_fw, view_inf_fh)
             self.dialog = c_view_txt(self.master, sf_vinf, root_geometry_string(form_w_, form_h_, addx, addy))
             self.dialog.go(s.encode('cp1251').decode('utf-8'))
             print(type(s))
-        f.close()
+            f.close()
 
     def f_view_txt(self):
         pass
