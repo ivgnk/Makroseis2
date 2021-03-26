@@ -5,6 +5,7 @@ inf-файл - структура всех данных и ввод из них
 Released under GNU Public License (GPL)
 email igenik@rambler.ru
 """
+#pinp_struct
 
 import numpy as np
 import copy
@@ -20,8 +21,8 @@ from tkinter import messagebox as mb
 from ptkinter_menu_proc import *
 
 test_mode = True  # тестовый режим
-makroseis_folder: str = r"Work_Lang\Python\PyCharm\Makroseis"
-makroseis_datfolder: str = r"Work_Lang\Python\PyCharm\Makroseis\Dat"
+makroseis_folder: str = r"Work_Lang\Python\PyCharm\Makroseis_GUI"
+makroseis_datfolder: str = r"Work_Lang\Python\PyCharm\Makroseis_GUI\Dat"
 datfolder: str = r"Dat"
 testxls_filename: str = r"точки_ввод.xls"
 testtxt_filename: str = r"точки_ввод.txt"
@@ -61,20 +62,25 @@ inf_fname_def_auto = 'точки_ввод_AUTO.inf'
 # https://stackoverflow.com/questions/3477283/what-is-the-maximum-float-in-python
 
 # пустой словрь для данных из inf-файла
-empty_inf_dict = dict(name_sq='', fdat_name='',  # название площади, имя файла данных
-                       a=float('nan'), b=float('nan'), c=float('nan'),
-                       # коэффициенты a, b, c макросейсмического уравнения
-                       min_mag=float('nan'), max_mag=float('nan'),  # минимальная и максимальная магнитуда
-                       min_lat=float('nan'), max_lat=float('nan'),  # минимальная и максимальная широта
-                       min_lon=float('nan'), max_lon=float('nan'),  # минимальная и максимальная долгота
-                       min_dep=float('nan'), max_dep=float('nan'),  # минимальная и максимальная глубина
-                       ini_lat=float('nan'), ini_lon=float('nan'),  # начальное периближение для минимизации - широта, долгота
-                       ini_mag=float('nan'), ini_dep=float('nan'),  # начальное периближение для минимизации - магнитуда, глубина
-                       calc_ini=False, # внутреняя информация -  надо ли самому расчитывать начальное приближение
-                       work_dir='',  # внутреняя информация - папка с данными,
-                       finf_name='', # внутреняя информация - имя inf-файла
-                       npoint=float('nan') # внутреняя информация - число точек в файле *.txt или xlsx
-                       )
+empty_inf_dict = dict(name_sq='',  # название площади
+                      fdat_name_= '',  #  имя файла данных
+                      full_fdat_name_ ='',  #  полное имя файла данных с путём
+                      a=float('nan'), b=float('nan'), c=float('nan'),
+                      # коэффициенты a, b, c макросейсмического уравнения
+                      min_mag=float('nan'), max_mag=float('nan'),  # минимальная и максимальная магнитуда
+                      min_lat=float('nan'), max_lat=float('nan'),  # минимальная и максимальная широта
+                      min_lon=float('nan'), max_lon=float('nan'),  # минимальная и максимальная долгота
+                      min_dep=float('nan'), max_dep=float('nan'),  # минимальная и максимальная глубина
+                      ini_lat=float('nan'), ini_lon=float('nan'),  # начальное периближение для минимизации - широта, долгота
+                      ini_mag=float('nan'), ini_dep=float('nan'),  # начальное периближение для минимизации - магнитуда, глубина
+                      calc_ini=False,  # внутреняя информация -  надо ли самому расчитывать начальное приближение
+                      work_dir='',  # внутреняя информация - папка с данными,
+                      finf_name_='',  # имя inf-файла
+                      full_finf_name_ = '',  # имя inf-файла
+                      npoint=float('nan'),  # внутреняя информация - число точек в файле *.txt или xlsx
+                      typeof_input = 0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt/xlsx
+                      saved_in_json = 0  # 0 - текущий ввод; 1 - ввод из json
+                      )
 
 # пустой словрь для параметров вычисления
 @dataclass
@@ -86,7 +92,9 @@ class empty_calc_class:
 
 
 # Файл тестовый
-inf_defdict = dict(name_sq='Новозаречный', fdat_name=txtfname_def,  # название площади, имя файла данных
+inf_defdict = dict(name_sq='Новозаречный',  # название площади
+                   fdat_name_=txtfname_def,  #  имя файла данных
+                   full_fdat_name_='',  # полное имя файла данных с путём
                    a=a_def, b=b_def, c=c_def,  # коэффициенты a, b, c макросейсмического уравнения
                    min_mag=0.0, max_mag=10.0,  # минимальная и максимальная магнитуда
                    min_lat=float('nan'), max_lat=float('nan'),  # минимальная и максимальная широта
@@ -95,8 +103,11 @@ inf_defdict = dict(name_sq='Новозаречный', fdat_name=txtfname_def,  
                    ini_lat=float('nan'), ini_lon=float('nan'),  # начальное периближение для минимизации
                    calc_ini=False,  # внутреняя информация -  надо ли самому расчитывать начальное приближение
                    work_dir='',  # внутреняя информация о папке с данными
-                   finf_name='', # внутреняя информация - имя inf-файла
-                   npoint = float('nan')  # внутреняя информация - число точек в файле *.txt или xlsx
+                   finf_name_='',  # имя inf-файла
+                   full_finf_name_='',  # имя inf-файла
+                   npoint = float('nan'),  # внутреняя информация - число точек в файле *.txt или xlsx
+                   typeof_input = 0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt; 3 - введен xlsx
+                   saved_in_json = 0  # 0 - текущий ввод; 1 - ввод из json
                    )
 
 # Как я могу проверить, пуст numpy или нет?
@@ -182,7 +193,8 @@ def control_curr_dict(curr_dict: dict) -> bool:
     """
     Контроль информации из inf-файла
     """
-    full_file_name: str = "\\".join([curr_dict["work_dir"], curr_dict["fdat_name"]])
+    full_file_name: str = "\\".join([curr_dict["work_dir"], curr_dict["fdat_name_"]])
+    curr_dict["full_fdat_name_"] = full_file_name
     path = pathlib.Path(full_file_name)
     if not path.exists():
         print(ss_fdfpne, full_file_name) # 'путь к dat-файлу не существует = '
@@ -252,7 +264,7 @@ def input_inf(fname, is_view=False) -> (bool, object):
             if i == 0:
                 curr_dict["name_sq"] = part_lines[0].strip()
             elif i == 1:
-                curr_dict["fdat_name"] = part_lines[0].strip()
+                curr_dict["fdat_name_"] = part_lines[0].strip()
             elif i == 2:
                 (curr_dict["a"], curr_dict["b"], curr_dict["c"]) = work_with_line3dat(part_lines[0].strip())
             elif i == 3:
@@ -286,7 +298,10 @@ def input_inf(fname, is_view=False) -> (bool, object):
     # Запоминаем путь к файлу данных
         # https://python-scripts.com/pathlib
         curr_dict["work_dir"] = str(pathlib.Path(fname).parent)
-        curr_dict["finf_name"] = str(pathlib.Path(fname).name)
+        # print("work_dir", curr_dict["work_dir"])
+        curr_dict["finf_name_"] = str(pathlib.Path(fname).name)
+        curr_dict["full_finf_name_"] = fname
+        curr_dict["full_fdat_name_"] = "\\".join([curr_dict["work_dir"], curr_dict["fdat_name_"]])
     # начальное периближение для минимизации - магнитуда, глубина
     #    curr_dict["ini_mag"] = ini_mag
     #    curr_dict["ini_dep"] = ini_dep
@@ -400,9 +415,4 @@ def result_control(lat_: float, lon_: float, dep_: float, mag_:float) -> None:
         ii = ii + int(indiap)
         print(i,' ',indiap, '   ', i_left_edge[i], imod [i], i_right_edge[i])
     print('Всего значений в диапазоне ', ii)
-
-
-
-
-
 

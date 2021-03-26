@@ -9,7 +9,7 @@ email igenik@rambler.ru
 
 # -- Значки и иконки
 ico_progr = r'graphics\Земл144.ico'
-ico_file_open_ = r'graphics\open_73704.png'
+ico_input_inf_ = r'graphics\open_73704.png'
 ico_calc_ = r'graphics\play_22349.png'
 ico_resmap_ = r'graphics\map_54390.png'
 ico_resgraph_ = r'graphics\chart_37129_2.png'
@@ -18,8 +18,21 @@ ico_usrmanual_ = r'graphics\text_81214_2.png'
 win_name: str = "Макросейсмика"  # название окна программы
 
 usr_manual_fn = r'!Doc\Макросейсмика_РукПользователя_2021_1_1.docx'
-ini_fn = 'makro_seis.ini'  # текстовый файл с текущими параметрами
+
+json_fn = 'Makroseis_GUI.json' # текстовый файл с текущими параметрами
+
 dat_dir = 'dat'
+
+# -- Для словаря с данными
+l1_coef_macro_ = 'коэффициенты a, b, c макросейсмического уравнения'
+l2_min_max_magn = 'минимальная и максимальная магнитуда'
+l3_min_max_lat = 'минимальная и максимальная широта, градусы'
+l4_min_max_lon = 'минимальная и максимальная долгота, градусы'
+l5_min_max_dep = 'минимальная и максимальная глубина, км'
+l6_ini_appr = 'Начальное приближение для минимизации'
+l7_ini_lat_lon = 'широта, долгота'
+l8_ini_mag_dep = 'магнитуда, глубина, км'
+
 
 # -- Для подменю "Файл"
 sf_input = "Открыть..."
@@ -36,6 +49,9 @@ ss_fdfpne = 'путь к dat-файлу не существует = '
 ss_fdfne = 'dat-файл не существует = '
 ss_fpne = 'путь не существует = '
 ss_ffne_ = 'файл не существует = '
+
+ss_fifnf = 'inf - файл не найден'.center(30)
+ss_feif = 'Ошибки в inf-файле'.center(30)
 
 ss_fmsee = 'Ошибка в коэффициентах макросейсмического уравнения'
 ss_fmde = 'Ошибка в диапазоне магнитуд'
@@ -54,7 +70,7 @@ sf_err_ext = ss_fnsf.center(40)
 sh_help = "Справка"
 sh_about = "О программе"
 sh_about1 = 'Программа "Макросейсмика"'.center(40) + "\n" +\
-            "Разработчик Геник И.В.,".center(48) +\
+            "Разработчик Иван В. Геник,".center(42) +\
             "\n" + "igenik@rambler.ru".center(52)
 # Строки. Функции и методы строк
 # https://pythonworld.ru/tipy-dannyx-v-python/stroki-funkcii-i-metody-strok.html

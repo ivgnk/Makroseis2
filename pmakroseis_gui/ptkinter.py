@@ -1,3 +1,11 @@
+"""
+Главный объект программы class MakroseisGUI(Frame):
+
+(C) 2020 Ivan Genik, Perm, Russia
+Released under GNU Public License (GPL)
+email igenik@rambler.ru
+"""
+
 from tkinter import *
 from tkinter import messagebox as mb
 from tkinter import filedialog as fd
@@ -14,26 +22,37 @@ from dataclasses import dataclass
 from ptkinter_menu_proc import *
 
 from PIL import Image, ImageTk
-import os, sys
+import os
+import sys
+import pathlib
 import winsound
 #------ Из Makro_seis
 import pfile, pinp_proc
-# import pinp_struct
+import pinp_struct
+import json
 
-p_width:int = 1400 # ширина окна программы
-p_height:int = 900  # высота окна программы
 
-view_inf_fw = 1150 # ширина окна проcмотра inf-файла
-view_inf_fh = 400 # высота окна проcмотра inf-файла
+p_width: int = 1400  # ширина окна программы
+p_height: int = 900  # высота окна программы
 
-vf_width:int = 700 # ширина окна просмотра
-vf_height:int = 700  # высота окна программы
+view_inf_fw = 1150  # ширина окна проcмотра inf-файла
+view_inf_fh = 400  # высота окна проcмотра inf-файла
+
+view_dat_fw = 1150  # ширина окна проcмотра dat-файла
+view_dat_fh = 800  # высота окна проcмотра dat-файла
+
+view_par_fw = 750  # ширина окна проcмотра параметров минимизации
+view_par_fh = 200  # высота окна проcмотра параметров минимизации
+
+vf_width: int = 700  # ширина окна просмотра
+vf_height: int = 700  # высота окна программы
 
 status_bar_width = 220
 status_bar_height = 20
 
 #  1 июля 2018 Введение в Data classes (Python 3.7)
 #  https://habr.com/ru/post/415829/
+
 @dataclass
 class status_bar_label:
     status_bar: Any
@@ -53,20 +72,21 @@ class MakroseisGUI(Frame):
     SBC_st = 0    # Программа запущена
     SBC_fdni =10  # Данные не введены
     SBC_fdi = 11  # Данные введены
-    SBC_fvpar = 14 # Просмотр параметров минимизации
+    SBC_fvpar = 14  # Просмотр параметров минимизации
     SBC_ce = 22  # Вычисление закончено
     SBC_cc = 22  # Вычисление прервано
     SBC_hab = 41  # О программе
     SBC_hum = 42  # Руководство пользователя
     SBC_ns = 50
 
-    is_input_inf = False;     fn_current_inf=''    # текущий inf-файл
-    is_input_txt = False;     fn_current_txt =''   # текущий txt-файл
-    is_input_xlsx = False;    fn_current_xlsx =''  # текущий xlsx-файл
-    is_exist_resf = False;    fn_current_resf =''  # текущий res-файл
-    fn_inf = ''
+    is_input_inf = False;     fn_current_inf = ''    # текущий inf-файл
+    is_input_txt = False;     fn_current_txt = ''   # текущий txt-файл
+    is_input_xlsx = False;    fn_current_xlsx = ''  # текущий xlsx-файл
+    is_exist_resf = False;    fn_current_resf = ''  # текущий res-файл
+    dict_struct = pinp_struct.empty_inf_dict
+    # fn_inf = '' # имя inf-файла
     dn_current_dir=''
-    dn_current_dat_dir=''
+    dn_current_dat_dir = ''
 
     scr_w = 0 # ширина экрана
     scr_h = 0 # высота экрана
@@ -100,9 +120,9 @@ class MakroseisGUI(Frame):
         # self.the_status_bar_label2.status_bar.pack(side=LEFT, fill=X)
         #-------- Создание Status bar
         rest_width = form_w_ - (2*(status_bar_width+2+2))
-        self.the_status_bar_label1.status_bar.place(x=1,                     y=form_h_-status_bar_height-3, width=status_bar_width, height=status_bar_height)
-        self.the_status_bar_label2.status_bar.place(x=status_bar_width+2,    y=form_h_-status_bar_height-3, width=status_bar_width, height=status_bar_height)
-        self.the_status_bar_label3.status_bar.place(x=2*(status_bar_width+2),y=form_h_-status_bar_height-3, width=rest_width, height=20)
+        self.the_status_bar_label1.status_bar.place(x=1,                      y=form_h_-status_bar_height-3, width=status_bar_width, height=status_bar_height)
+        self.the_status_bar_label2.status_bar.place(x=status_bar_width+2,     y=form_h_-status_bar_height-3, width=status_bar_width, height=status_bar_height)
+        self.the_status_bar_label3.status_bar.place(x=2*(status_bar_width+2), y=form_h_-status_bar_height-3, width=rest_width, height=20)
         #-------- Создание панели инструментов
         # Меню, подменю и панель инструментов в Tkinter
         # https://python-scripts.com/tkinter-menu-toolbars-example
@@ -113,11 +133,20 @@ class MakroseisGUI(Frame):
         self.create_tool_bar(main)
         self.scrolledtext_win1 = self.create_scrolledtext_win(main)
 
-        # Определяем текущую папку с программой https://ru.stackoverflow.com/questions/535318/Текущая-директория-в-python
+       # Определяем текущую папку с программой https://ru.stackoverflow.com/questions/535318/Текущая-директория-в-python
         self.dn_current_dir =os.getcwd()
         self.dn_current_dat_dir = "\\".join([self.dn_current_dir, dat_dir])
         # print(self.dn_current_dir)
         # self.creattxt = scrolledtext.ScrolledText
+
+        # Определяем есть ли json файл
+        path = pathlib.Path(json_fn)
+        if  path.is_file():
+            self.get_from_json()
+            self.dict_struct["saved_in_json"] = 1
+        else:
+            self.dict_struct["saved_in_json"] = 0
+
 
     def on_closing(self):
         sys.exit(0)
@@ -130,7 +159,7 @@ class MakroseisGUI(Frame):
         toolbar = Frame(main, bd=1, relief=RAISED)
         # https://icon-icons.com/ru/download/
         # полный формат ввода иконки 'E:\Work_Lang\Python\PyCharm\Tkinter\Ico\play_22349.png
-        self.create_button1(ico_file_open_ , self.file_open_, toolbar, 'Открыть файл данных')
+        self.create_button1(ico_input_inf_, self.input_inf_, toolbar, 'Открыть файл данных')
         self.create_button1(ico_calc_, self.cmd_calc, toolbar, 'Расчет')
         self.create_button1(ico_resmap_, self.cmd_calc_resmap, toolbar, 'Карта результатов')
         self.create_button1(ico_resgraph_, self.cmd_calc_resmap, toolbar, 'График результатов')
@@ -208,38 +237,48 @@ class MakroseisGUI(Frame):
     def cmd_calc_resmap(self):
         winsound.Beep(frequency=250, duration=1000) # Set Duration To 1000 ms == 1 second
 
-    def input_from_inf(self, fname:str)->bool:
-        good_end = pinp_proc.the_input(fname = fname,  is_view = False)
-        return good_end
-        # return True
 
-    def input_from_txt(self, fname:str)->bool:
+    def input_from_inf(self, fname: str) -> bool:
+        (good_end, self.dict_struct) = pinp_proc.the_input(fname=fname,  is_view=False)
+        self.put_to_json()
+        self.dict_struct["saved_in_json"] = 1
+        return good_end
+
+
+    def input_from_txt(self, fname: str) -> bool:
         pass
 
-    def input_from_xlsx(self, fname:str)->bool:
+
+    def input_from_xlsx(self, fname: str) -> bool:
         pass
 
 
     #---- Подменю Файл
-    def file_open_(self):
+    def input_inf_(self):
         # print('file_open_()')
         ext_type=''
         good_new_data = ''
 
         fn_dat = fd.askopenfilename(initialdir=self.dn_current_dat_dir,
-            defaultextension='.inf', filetypes=[('inf файлы','*.inf'), ('txt файлы','*.txt'),
-                                                ('xlsx файлы','*.xlsx'), ('Все файлы','*.*')])
+             defaultextension='.inf', filetypes=[('inf файлы', '*.inf'), ('txt файлы', '*.txt'),
+                                                ('xlsx файлы', '*.xlsx'), ('Все файлы', '*.*')])
+
         the_ext = pfile.gfe(fn_dat)
-        if the_ext=='.inf':
+        if the_ext == '.inf':
             ext_type = 'i'
             good_new_data = self.input_from_inf(fn_dat)
-            if good_new_data: self.fn_inf = fn_dat
-        elif the_ext=='.txt':
+            if good_new_data:
+                # self.dict_struct['full_finf_name_'] = fn_dat
+                # self.dict_struct['finf_name_'] =
+                self.dict_struct['typeof_input'] = 1
+        elif the_ext == '.txt':
             ext_type = 't'
             good_new_data = self.input_from_txt(fn_dat)
-        elif the_ext=='.xlsx':
+            self.dict_struct['typeof_input'] = 2
+        elif the_ext == '.xlsx':
             ext_type = 'x'
             good_new_data = self.input_from_xlsx(fn_dat)
+            self.dict_struct['typeof_input'] = 3
         elif the_ext == '':
             ext_type = ''
         else:
@@ -262,12 +301,15 @@ class MakroseisGUI(Frame):
                 self.change_status_bar1(self.SBC_fdni, self.the_status_bar_label1.status_bar)
                 self.the_status_bar_label3.status_bar['text'] = sf_ferror
 
-    def input_inf(self):
-       # (good_end, thecurr_dict) = pinp_struct.input_inf(self.fn_inf)
-        pass
+    def put_to_json(self):  # запись dict_struct в json
+        with open(json_fn, 'w') as file:
+            json.dump(self.dict_struct, file)
 
+    def get_from_json(self):  # чтение dict_struct из json
+        with open(json_fn, 'r') as file:
+            self.dict_struct = json.load(file)
 
-    def view_file(self, fname:str):
+    def view_file(self, fname: str):
         pass
 
     def input_txt(self):
@@ -277,26 +319,83 @@ class MakroseisGUI(Frame):
         pass
 
     def f_view_inf(self)->None:
-        if self.fn_inf=='':
+        if self.dict_struct['full_finf_name_'] == '':
             mb.showerror(s_error, sf_finfni)
         else:
-            f = open(self.fn_inf, 'r')
+            ffn = self.dict_struct['full_finf_name_']
+            f = open(ffn, 'r')
             s = f.read()
-            (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_inf_fw, view_inf_fh)
-            self.dialog = c_view_txt(self.master, sf_vinf, root_geometry_string(form_w_, form_h_, addx, addy))
-            self.dialog.go(s.encode('cp1251').decode('utf-8'))
             print(type(s))
+
+            # print(s[1])
+            (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_inf_fw, view_inf_fh)
+            self.dialog = c_view_txt(self.master, sf_vinf+'    '+ffn, root_geometry_string(form_w_, form_h_, addx, addy))
+            self.dialog.go(s.encode('cp1251').decode('utf-8'))
             f.close()
 
-    def f_view_txt(self):
-        pass
+    def f_view_dat(self):
+        if (self.dict_struct["saved_in_json"] == 1) or (self.dict_struct['typeof_input'] > 0):
+            dfn = self.dict_struct['full_fdat_name_']
+            if  dfn == '':
+                mb.showerror(s_error, ss_fdfne+dfn)
+            else:
+                ffn = self.dict_struct['full_fdat_name_']
+                ss = pfile.gfe(ffn)
+                if ss =='.txt':
+                    f = open(self.dict_struct['full_fdat_name_'], 'r')
+                    s = f.read()
+                    # s = '1\n22\n333'
+                    f.close()
+                    (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_dat_fw, view_dat_fh)
+                    self.dialog = c_view_txt(self.master, sf_vdat+'    '+ffn, root_geometry_string(form_w_, form_h_, addx, addy))
+                    self.dialog.go(s) # .encode('cp1251').decode('utf-8')
+                elif ss =='.xlsx':
+                    mb.showerror(s_error, s_error)
+        else:
+            mb.showerror(s_error, ss_fdni)
+
+
+
 
     def f_view_xlsx(self):
         pass
 
-    def f_view_par(self):
-        pass
-        # self.change_status_bar1(self.SBC_fvpar, self.the_status_bar_label1.status_bar)
+
+    def create_parminim_str(self, infstr: str) -> str:
+        d = self.dict_struct
+        s = infstr + '\n    ' # пробелы в качестве левого отступа следующей строки
+        s += '\n    '
+        s += l1_coef_macro_  + ' = '+str(d['a'])+'  '+str(d['b'])+'  '+str(d['c']) + '\n    '
+        s += l2_min_max_magn + ' = '+str(d['min_mag'])+'  '+str(d['max_mag'])+'\n    '
+        s += l3_min_max_lat  + ' = '+str(d['min_lat'])+'  '+str(d['max_lat'])+'\n    '
+        s += l4_min_max_lon  + ' = '+str(d['min_lon'])+'  '+str(d['max_lon'])+'\n    '
+        s += l5_min_max_dep  + ' = '+str(d['min_dep'])+'  '+str(d['max_dep'])+'\n    '
+        s += l6_ini_appr.rjust(55) + '\n    '
+        s += l7_ini_lat_lon  + ' = '+str(d['ini_lat'])+'  '+str(d['ini_lon'])+'\n    '
+        s += l8_ini_mag_dep  + ' = '+str(d['ini_mag'])+'  '+str(d['ini_dep'])
+        return s
+
+    def f_view_par_minim(self):
+        infstr: str = ''
+        if (self.dict_struct["finf_name_"] == ""):
+            infstr = 'Параметры по умолчанию'.rjust(45)
+        else:
+            infstr = 'Параметры из inf-файла   '+ self.dict_struct["full_finf_name_"]
+
+        if (self.dict_struct["saved_in_json"] == 1) or (self.dict_struct['typeof_input']>0):
+           s = self.create_parminim_str(infstr)
+           (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_par_fw, view_par_fh)
+           self.dialog = c_view_txt(self.master, sf_vpar, root_geometry_string(form_w_, form_h_, addx, addy))
+           self.dialog.go(s)  # .encode('cp1251').decode('utf-8')
+        else:
+           if self.dict_struct['typeof_input'] ==  0:  # не введено
+                mb.showerror(s_error, ss_fdni)
+           else:
+               pass
+
+    def f_view_map(self):
+        if self.dict_struct['typeof_input'] ==  0:  # не введено
+            mb.showerror(s_error, ss_fdni)
 
 
     def file_exit_(self):
@@ -306,12 +405,12 @@ class MakroseisGUI(Frame):
         print('self.destroy() 2')
         # sys.exit(0)
 
-    #---- Подменю Расчет
+    # ---- Подменю Расчет
     def calc_calc_(self):
         self.change_status_bar1(self.SBC_ce, self.the_status_bar_label1.status_bar)
         # print(self.the_status)
 
-    #---- Подменю Помощь
+    # ---- Подменю Помощь
     def help_about_(self):
         mb.showinfo(sh_about, sh_about1)
         self.change_status_bar1(self.SBC_hab, self.the_status_bar_label1.status_bar)
@@ -324,16 +423,16 @@ class MakroseisGUI(Frame):
     # ---- Подменю Помощь "о программе"
 
     def create_menu(self):
-        #----- Меню
+        # ----- Меню
         # https://metanit.com/python/tutorial/9.10.php
         main_menu = Menu()
-        #---- Подменю Файл
+        # ---- Подменю Файл
         file_menu = Menu(tearoff=0) #font=("Verdana", 13)
-        file_menu.add_command(label=sf_input, command=self.file_open_)
+        file_menu.add_command(label=sf_input, command=self.input_inf_)
         file_menu.add_command(label=sf_vinf , command=self.f_view_inf)
-        file_menu.add_command(label=sf_vdat)
-        file_menu.add_command(label=sf_vpar, command=self.f_view_par)
-        file_menu.add_command(label=sf_vimap)
+        file_menu.add_command(label=sf_vdat , command=self.f_view_dat)
+        file_menu.add_command(label=sf_vpar, command=self.f_view_par_minim)
+        file_menu.add_command(label=sf_vimap, command=self.f_view_map)
         file_menu.add_separator()
         file_menu.add_command(label=sf_exit, command=self.file_exit_)
         # ---- Подменю Расчет

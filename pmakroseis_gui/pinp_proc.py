@@ -273,17 +273,17 @@ def get_file_time(fname: str, thetest: bool = False) -> str:
     return beauty_time1
 
 
-def the_input(fname: str,  is_view: bool) -> bool:
+def the_input(fname: str,  is_view: bool) -> (bool, object):
     (good_end, thecurr_dict) = input_inf(fname, is_view)
     if not good_end:
-        print('inf - файл не найден')
-        return False
+        mb.showerror(s_error, ss_fifnf)  # 'inf - файл не найден'
+        return False, None
     else:
         if not control_curr_dict(thecurr_dict):
-            print('Ошибки в inf-файле')
-            return False
+            mb.showerror(s_error, ss_feif) # 'Ошибки в inf-файле'
+            return False, None
         else:
-            fdat_name = name_and_ext(thecurr_dict["work_dir"], thecurr_dict["fdat_name"])
+            fdat_name = name_and_ext(thecurr_dict["work_dir"], thecurr_dict["fdat_name_"])
             if is_view: print('fdat_name = ',fdat_name)
             numpy_arr = the_input_dat(fdat_name, is_view)
 # ndarray.shape - размеры массива, его форма. Это кортеж натуральных чисел, показывающий длину массива по каждой оси.
@@ -312,7 +312,7 @@ def the_input(fname: str,  is_view: bool) -> bool:
             # Вычисление начального приближения, если оно не задано -- конец
             add_dat_struct(thecurr_dict, numpy_arr)
             if is_view: print_dat_struct()
-            return True
+            return True, thecurr_dict
 
 
 def prc(row:int, col:int) -> None: # для проверки печать строки и столбца
