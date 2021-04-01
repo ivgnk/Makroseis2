@@ -18,7 +18,7 @@ def print_string(the_list) -> None:
 
 def num_words_in_string(s: str) -> int:
     return len(re.split('\s+', s))
-
+    # проверено см. последняя строка файла, все правильно
 
 # print(re.sub(r'\D', '', 'Fjkoweuqe -1245 654lfr'))
 # print(num_words_in_string('In the hole in the ground there lived a   hobbit')) # 10
@@ -28,3 +28,5 @@ def num_words_in_string(s: str) -> int:
 # Проработать строки и регулярные выражения
 # pythonist.ru/s/proverka-yavlyaetsya-li-stroka-palindromom/?utm_source=turbo_turbo
 # https://habr.com/ru/post/349860/
+
+# print(num_words_in_string('r4 ry 7 9f'))

@@ -13,7 +13,8 @@ email igenik@rambler.ru
 # import ctypes
 from tkinter import *
 
-def the_change_progr_ico(the_root)->None:
+
+def the_change_progr_ico(the_root) -> None:
     """
     Смена иконки программы
     Как поставить свою цветную иконку на программу написанную на tkinter?
@@ -22,8 +23,7 @@ def the_change_progr_ico(the_root)->None:
     the_root.iconbitmap(r'graphics\Земл144.ico')
 
 
-
-def get_screen_size(tkinter_Tk)-> (int, int):
+def get_screen_size(tkinter_Tk) -> (int, int):
     """
     Определение средствами tkinter ширины и высоты экрана
     https://askdev.ru/q/kak-poluchit-razreshenie-monitora-v-python-33296/
@@ -39,54 +39,55 @@ def get_screen_size(tkinter_Tk)-> (int, int):
     the_screen_height = tkinter_Tk.winfo_screenheight()
     return the_screen_width, the_screen_height
 
-def center_form_positioning(scr_w: int, scr_h: int, pr_width: int, pr_height:int)-> (int, int, int, int):
+
+def center_form_positioning(scr_w: int, scr_h: int, pr_width: int, pr_height: int) -> (int, int, int, int):
     """
     Позиционирование любой формы по центру экрана
     return: параметры w_, h_, add_width_, add_height_ для root.geometry("w_xh_+add_width_+add_height_")
     """
-    add_width_:int
-    add_height_:int
-    if pr_width>=scr_w:
+    add_width_: int
+    add_height_: int
+    if pr_width >= scr_w:
         add_width_ = 0
         w_ = scr_w
     else:
         add_width_ = (scr_w-pr_width) // 2
         w_ = pr_width
 
-    if pr_height>=scr_h:
+    if pr_height >= scr_h:
         add_height_ = 0
-        h_=scr_h
+        h_ = scr_h
     else:
         add_height_ = round((scr_h-pr_height) / 2.5)
         h_ = pr_height
     return w_, h_, add_width_, add_height_
 
 
-def mainform_positioning(tkinter_Tk, pr_width: int, pr_height:int)-> (int, int, int, int, int, int):
+def mainform_positioning(tkinter_Tk, pr_width: int, pr_height: int) -> (int, int, int, int, int, int):
     """
     Позиционирование главной формы по центру экрана
     return: параметры w_, h_, add_width_, add_height_ для root.geometry("w_xh_+add_width_+add_height_")
     """
-    add_width_:int
-    add_height_:int
+    add_width_: int
+    add_height_: int
     (scr_w, scr_h) = get_screen_size(tkinter_Tk)
-    if pr_width>=scr_w:
+    if pr_width >= scr_w:
         add_width_ = 0
         w_ = scr_w
     else:
         add_width_ = (scr_w-pr_width) // 2
         w_ = pr_width
 
-    if pr_height>=scr_h:
+    if pr_height >= scr_h:
         add_height_ = 0
-        h_=scr_h
+        h_ = scr_h
     else:
         add_height_ = round((scr_h-pr_height) / 2.5)
         h_ = pr_height
     return scr_w, scr_h, w_, h_, add_width_, add_height_
 
 
-def root_geometry_string(form_w_:int, form_h_:int, x:int, y:int)-> str:
+def root_geometry_string(form_w_: int, form_h_: int, x: int, y: int) -> str:
     """
     Форматирование строки для root.geometry("form_w_xform_h_+x+y")
     """
@@ -94,7 +95,7 @@ def root_geometry_string(form_w_:int, form_h_:int, x:int, y:int)-> str:
     return s
 
 
-def root_geometry_string_auto(tkinter_Tk, form_w_:int, form_h_)-> str:
+def root_geometry_string_auto(tkinter_Tk, form_w_: int, form_h_) -> str:
     """
     Форматирование строки для root.geometry("form_w_xform_h_+x+y")
     """

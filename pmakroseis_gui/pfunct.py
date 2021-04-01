@@ -9,16 +9,28 @@
 import math
 import numpy as np
 
+def list2d3_to_3nparray(ll:list) -> (np.ndarray, np.ndarray, np.ndarray):
+    llen = len(ll)
+    x = np.random.random(llen)
+    y = np.random.random(llen)
+    z = np.random.random(llen)
+    for i in range(llen):
+        d = ll[i]
+        x[i] = d[0]
+        y[i] = d[1]
+        z[i] = d[2]
+    return x, y, z
+
 
 def out_of_diap2(dat, dat_min, dat_max) -> (float, float):
     """
     Расчет выхода за диапазон - абсолютные и относительные значения (доли 1)
     """
     llen = dat_max-dat_min
-    if (dat_min > dat):
+    if dat_min > dat:
         d = dat_min - dat
         return d, d/llen
-    if (dat_max < dat):
+    if dat_max < dat:
         d = dat - dat_max
         return d, d/llen
 
@@ -28,10 +40,10 @@ def out_of_diap1proc(dat, dat_min, dat_max) -> float:
     Расчет выхода за диапазон - относительные значения (доли 1)
     """
     llen = dat_max-dat_min
-    if (dat_min > dat):
+    if dat_min > dat:
         d = dat_min - dat
         return d/llen
-    if (dat_max < dat):
+    if dat_max < dat:
         d = dat - dat_max
         return d/llen
 
@@ -43,31 +55,33 @@ def out_of_diap2proc(dat, dat_min, dat_max) -> float:
     """
     dat_minln = math.log10(dat_min)  # print(dat_min)
     dat_maxln = math.log10(dat_max)
-    if dat<0:
+    if dat < 0:
         dat_ln = -10
     else:
         dat_ln = math.log10(dat)
 
     llen = dat_maxln-dat_minln
     d = 0
-    if (dat_minln > dat_ln):
+    if dat_minln > dat_ln:
         d = dat_minln - dat_ln
-    if (dat_maxln < dat_ln):
+    if dat_maxln < dat_ln:
         d = dat_ln - dat_max
     # print(d/llen)
     return abs(d/llen)
 
 
 def dat_in_diap(dat, dat_min, dat_max) -> bool:
-    return ((dat_min <= dat) and (dat <= dat_max))
+    return (dat_min <= dat) and (dat <= dat_max)
 
-def dat2_in_diap(dat1, dat2, dat_min, dat_max, isview:bool = False) -> bool:
-    if isview: print(dat1, dat2, dat_min, dat_max)
+
+def dat2_in_diap(dat1, dat2, dat_min, dat_max, isview: bool = False) -> bool:
+    if isview:
+        print(dat1, dat2, dat_min, dat_max)
     return (dat_min <= dat1) and (dat1 <= dat_max) and (dat_min <= dat2) and (dat2 <= dat_max)
 
 
 # ============  Тестирование
-def create_2d_nparray_r1c2(row, col, dat00 = 0.0, dat01 = 0.0) -> object:
+def create_2d_nparray_r1c2(row, col, dat00=0.0, dat01=0.0) -> object:
     a = np.zeros((row, col), dtype=object)
     a[0, 0] = dat00
     a[0, 1] = dat01
@@ -89,5 +103,3 @@ def add_2d_nparray(nparr1, dat00, dat01) -> object:
 # print(dat2_in_diap(float('nan'), float('nan'), float('nan'), float('nan'), isview=True))
 # test_2d_nparray()
 # print_format_examples()
-
-

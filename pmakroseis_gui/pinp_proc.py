@@ -64,11 +64,13 @@ from pstring import *
 from pinp_struct import *
 from pnumpy import *
 from tkinter import messagebox as mb
+import pmain_proc
 
 # https://ru.stackoverflow.com/questions/320292/Проблема-с-заменой-слеша-в-пути-на-python
 
-                           #txt_input работает, когда inf_input = False
-def prepare_input_filename(inf_input:bool, txt_input: bool, is_view: bool = False) -> (str, str):
+
+# txt_input работает, когда inf_input = False
+def prepare_input_filename(inf_input: bool, txt_input: bool, is_view: bool = False) -> (str, str):
     """
     Подготовка имени excel-файла к вводу данных из excel-файла
     для функции the_xls_import
@@ -83,11 +85,13 @@ def prepare_input_filename(inf_input:bool, txt_input: bool, is_view: bool = Fals
     full_file_name = ''
     curr_folder: str = os.path.abspath(os.curdir)
     makroseis_fullpath = "\\".join([drv_letter, makroseis_folder])
-    if is_view: print('curr_folder = ', curr_folder)
-    if is_view: print('makroseis_fullpath = ', makroseis_fullpath)
+    if is_view:
+        print('curr_folder = ', curr_folder)
+    if is_view:
+        print('makroseis_fullpath = ', makroseis_fullpath)
     if makroseis_fullpath == curr_folder:  # только тестирование
-        if inf_input: # ввод полного комплекта с *.inf
-            test_filename = testinf_filename # [если истина] if [выражение] else [если ложь]
+        if inf_input:  # ввод полного комплекта с *.inf
+            test_filename = testinf_filename  # [если истина] if [выражение] else [если ложь]
             res_file_name = test_restxt_filename if is_txt_res_file else test_resxls_filename
         else:         # ввод только файла данных *.txt или *.xls
             if txt_input:   # [если истина] if [выражение] else [если ложь]
@@ -113,7 +117,7 @@ def prepare_input_filename(inf_input:bool, txt_input: bool, is_view: bool = Fals
         mb.showerror(s_error, ss_ffne_ + full_file_name)
 
     # if is_view: print('full_file_name = ', full_file_name)
-    return (full_file_name, full_res_file_name)
+    return full_file_name, full_res_file_name
 # --------------- def prepare_datinput_filename()
 
 def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -> object:
@@ -128,10 +132,10 @@ def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -
     # https://andreyex.ru/yazyk-programmirovaniya-python/uchebnik-po-python-3/python-3-strokovyj-metod-splitlines/
     all_lines = f.read().splitlines()  #  разделяет строку по символу переноса строки \n. Возвращает список(list)
     nrow1 = len(all_lines) # вместе со строкой заголовков
-    ncol1 = ncol;
+    ncol1 = ncol
     if is_view: print('ncol=', ncol)
     for i in range(nrow1):
-        s: str = all_lines[i];
+        s: str = all_lines[i]
         all_lines[i] = s.strip()
         # print(i, all_lines[i])
 
@@ -142,14 +146,14 @@ def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -
         if (i != 0):
             s = all_lines[i];            # print(s)
             part_lines = s.split(maxsplit=ncol1);    # print_string(part_lines)
-            numpy_arr[i - 1, 0] = float(part_lines[0]) # Lat
-            numpy_arr[i - 1, 1] = float(part_lines[1]) # Lon
-            numpy_arr[i - 1, 2] = float(part_lines[2]) # Alt
-            numpy_arr[i - 1, 3] = float(part_lines[3]) # I_fact
-            numpy_arr[i - 1, 4] = float(part_lines[4]) # dI
-            numpy_arr[i - 1, 5] = int(part_lines[5])   # N
-            numpy_arr[i - 1, 6] = str(part_lines[6]) # Нас.пункт
-            if len(part_lines) > ncol1: # название состоит из 2 и более частей, в последней части остаток
+            numpy_arr[i - 1, 0] = float(part_lines[0])  # Lat
+            numpy_arr[i - 1, 1] = float(part_lines[1])  # Lon
+            numpy_arr[i - 1, 2] = float(part_lines[2])  # Alt
+            numpy_arr[i - 1, 3] = float(part_lines[3])  # I_fact
+            numpy_arr[i - 1, 4] = float(part_lines[4])  # dI
+            numpy_arr[i - 1, 5] = int(part_lines[5])    # N
+            numpy_arr[i - 1, 6] = str(part_lines[6])    # Нас.пункт
+            if len(part_lines) > ncol1:  # название состоит из 2 и более частей, в последней части остаток
                  numpy_arr[i - 1, 6] = numpy_arr[i - 1, 6]+' '+str(part_lines[7])
     if is_view: view_2d_array(numpy_arr, nrow1 - 1, ncol1, '2d массив NumPy заполнен из строк')
     return numpy_arr
@@ -168,7 +172,8 @@ def the_xls_importdat(xls_file_name: str, is_view: bool, test_dat: bool = False,
     my_wb = openpyxl.load_workbook(xls_file_name)
     my_sheet = my_wb.active
     my_sheet_title = my_sheet.title
-    if is_view: print("My sheet title: " + my_sheet_title)
+    if is_view:
+        print("My sheet title: " + my_sheet_title)
 # Openpyxl - Как найти количество строк с данными в xlsx
 # Источник: https://question-it.com/questions/611944/openpyxl-kak-najti-kolichestvo-strok-s-dannymi-v-xlsx
 # пустые столбцы и строки определяет плохо
@@ -183,7 +188,7 @@ def the_xls_importdat(xls_file_name: str, is_view: bool, test_dat: bool = False,
     else:
         nrow = my_sheet.max_row;    ncol = my_sheet.max_column
 
-    numpy_arr = np.zeros((nrow-1, ncol), dtype=object) # первую строку заголовков не вводим
+    numpy_arr = np.zeros((nrow-1, ncol), dtype=object)  # первую строку заголовков не вводим
     if is_view:   view_2d_array(numpy_arr, nrow-1, ncol, '2d массив NumPy создан')
     #  извлечение из my_sheet
     for i in range(nrow):
@@ -213,7 +218,7 @@ def view_excel_sheet(excel_sheet) -> None:
             print()
 
 
-def view_2d_array(arr, nrow: int, ncol: int, test_info: str='') -> None:
+def view_2d_array(arr, nrow: int, ncol: int, test_info: str = '') -> None:
     """
     Вывод на печать 2 мерного массива
     """
@@ -251,11 +256,11 @@ def the_input_dat(file_dat_name: str, is_view: bool = False) -> object:
     # filename: str = prepare_input_datfilename(txt_input)
     # print(filename)
     # print(get_file_time(filename))
-    ext:str = gfe(file_dat_name) # расширение с точкой в нижнем регистре
+    ext: str = gfe(file_dat_name)  # расширение с точкой в нижнем регистре
     if ext == '.txt':
         numpy_arr = the_txt_importdat(file_dat_name, is_view)
     else:
-        numpy_arr = the_xls_importdat(file_dat_name, is_view) # ввели данные
+        numpy_arr = the_xls_importdat(file_dat_name, is_view)  # ввели данные
     return numpy_arr
 
 
@@ -273,18 +278,18 @@ def get_file_time(fname: str, thetest: bool = False) -> str:
     return beauty_time1
 
 
-def the_input(fname: str,  is_view: bool) -> (bool, object):
+def the_input(fname: str, res_dir: str, is_view: bool) -> (bool, object):
     (good_end, thecurr_dict) = input_inf(fname, is_view)
     if not good_end:
         mb.showerror(s_error, ss_fifnf)  # 'inf - файл не найден'
         return False, None
     else:
         if not control_curr_dict(thecurr_dict):
-            mb.showerror(s_error, ss_feif) # 'Ошибки в inf-файле'
+            mb.showerror(s_error, ss_feif)  # 'Ошибки в inf-файле'
             return False, None
         else:
             fdat_name = name_and_ext(thecurr_dict["work_dir"], thecurr_dict["fdat_name_"])
-            if is_view: print('fdat_name = ',fdat_name)
+            if is_view: print('fdat_name = ', fdat_name)
             numpy_arr = the_input_dat(fdat_name, is_view)
 # ndarray.shape - размеры массива, его форма. Это кортеж натуральных чисел, показывающий длину массива по каждой оси.
 # Для матрицы из n строк и m столбов, shape будет (n,m).
@@ -312,11 +317,15 @@ def the_input(fname: str,  is_view: bool) -> (bool, object):
             # Вычисление начального приближения, если оно не задано -- конец
             add_dat_struct(thecurr_dict, numpy_arr)
             if is_view: print_dat_struct()
+            pmain_proc.log_file_name = create_log_filename(res_dir, fname)
             return True, thecurr_dict
 
 
-def prc(row:int, col:int) -> None: # для проверки печать строки и столбца
+def prc(row: int, col: int) -> None:  # для проверки печать строки и столбца
     print('   row = ', row)
     print('column = ', col)
 
-
+def create_log_filename(resdir: str, inf_file_name) -> str:
+    fn = gfn(inf_file_name) + '_res.xlsx'
+    s = "\\".join([resdir, fn])
+    return s

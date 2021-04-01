@@ -32,7 +32,7 @@ def calc_geogr_dist(StartLat: float, StartLong: float, EndLat: float, EndLong: f
     if ((abs(StartLat - EndLat) < 1e-8) and (abs(StartLong - EndLong) < 1e-8)):
         Distance: float = 0
         Bearing: float = 0
-        return Distance #, Bearing
+        return Distance # , Bearing
 
     # const Константы, используемые для вычисления смещения и расстояния
     D2R: float = pi/180  # //0.017453;            // Константа для преобразования градусов в радианы
@@ -70,8 +70,9 @@ def calc_geogr_dist(StartLat: float, StartLong: float, EndLat: float, EndLong: f
     # // Получаем смещение и расстояние
     Distance: float = (fz * fR)
 
-    return Distance #, Bearing
+    return Distance  # , Bearing
 # --------------- CalcGeogrDist
+
 
 def test_calc_geogr_dist() -> None:
     """
@@ -105,32 +106,33 @@ def compare_distance() -> None:
     StartLat: float = towns['Юрюзань'][0]
     StartLong: float = towns['Юрюзань'][1]
     for key in towns:
-        print(key) # ,'  ',towns[key],'  ',towns[key][0],'  ',towns[key][1]
+        print(key)  # ,'  ',towns[key],'  ',towns[key][0],'  ',towns[key][1]
         EndLat: float = towns[key][0]
         EndLong: float = towns[key][1]
 
-        Len_Gost = calc_geogr_dist_onGOST(StartLat, StartLong, EndLat , EndLong)  # в метрах
-        Len_NoNa = calc_geogr_dist(StartLat, StartLong, EndLat , EndLong) # в километрах
+        Len_Gost = calc_geogr_dist_onGOST(StartLat, StartLong, EndLat, EndLong)  # в метрах
+        Len_NoNa = calc_geogr_dist(StartLat, StartLong, EndLat, EndLong)  # в километрах
         # первое значение - в метры, второе - километры
         print("Len (Gost), км = %11.6f  Len(NoNa), км = %11.6f" % (Len_Gost/1000, Len_NoNa[0]))
 
         # print('Len (Gost) = ',Len_Gost,'  Len(NoNa) = ',Len_NoNa[0])
+
 
 def test_calc_geogr_dist2() -> None:
     """
     Просто расчет расстояний для проверки по функции def calc_geogr_dist(StartLat: float, StartLong: float, EndLat: float, EndLong: float):
     """
     print('Красный ключ - Челябинск')
-    StartLat: float = 55.3881557   #  Красный ключ
+    StartLat: float = 55.3881557   # Красный ключ
     StartLong: float = 56.655421
-    EndLat: float = 55.154 # Челябинск
+    EndLat: float = 55.154  # Челябинск
     EndLong: float = 61.429
     Distance = calc_geogr_dist(StartLat, StartLong, EndLat, EndLong)
     print(f'Distance  = {Distance:#10.5F} ')
 
-    StartLat: float = 54.912   #  Новозаречный
+    StartLat: float = 54.912   # Новозаречный
     StartLong: float = 57.321
-    EndLat: float = 55.154 # Челябинск
+    EndLat: float = 55.154  # Челябинск
     EndLong: float = 61.429
     Distance = calc_geogr_dist(StartLat, StartLong, EndLat, EndLong)
     print(f'Distance  = {Distance:#10.5F} ')

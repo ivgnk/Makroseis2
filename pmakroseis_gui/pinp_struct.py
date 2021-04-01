@@ -5,7 +5,7 @@ inf-файл - структура всех данных и ввод из них
 Released under GNU Public License (GPL)
 email igenik@rambler.ru
 """
-#pinp_struct
+# pinp_struct
 
 import numpy as np
 import copy
@@ -16,7 +16,6 @@ import pathlib
 from pfunct import *
 from pstring import *
 from pmain_proc import *
-from dataclasses import dataclass
 from tkinter import messagebox as mb
 from ptkinter_menu_proc import *
 
@@ -63,8 +62,8 @@ inf_fname_def_auto = 'точки_ввод_AUTO.inf'
 
 # пустой словрь для данных из inf-файла
 empty_inf_dict = dict(name_sq='',  # название площади
-                      fdat_name_= '',  #  имя файла данных
-                      full_fdat_name_ ='',  #  полное имя файла данных с путём
+                      fdat_name_= '',  # имя файла данных
+                      full_fdat_name_='',  # полное имя файла данных с путём
                       a=float('nan'), b=float('nan'), c=float('nan'),
                       # коэффициенты a, b, c макросейсмического уравнения
                       min_mag=float('nan'), max_mag=float('nan'),  # минимальная и максимальная магнитуда
@@ -76,24 +75,16 @@ empty_inf_dict = dict(name_sq='',  # название площади
                       calc_ini=False,  # внутреняя информация -  надо ли самому расчитывать начальное приближение
                       work_dir='',  # внутреняя информация - папка с данными,
                       finf_name_='',  # имя inf-файла
-                      full_finf_name_ = '',  # имя inf-файла
+                      full_finf_name_='',  # имя inf-файла
                       npoint=float('nan'),  # внутреняя информация - число точек в файле *.txt или xlsx
-                      typeof_input = 0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt/xlsx
-                      saved_in_json = 0  # 0 - текущий ввод; 1 - ввод из json
+                      typeof_input=0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt/xlsx
+                      saved_in_json=0  # 0 - текущий ввод; 1 - ввод из json
                       )
-
-# пустой словрь для параметров вычисления
-@dataclass
-class empty_calc_class:
-    lin_coeff: int   # коэффициент для барьерной функции
-    max_num_iter: int
-    num_iter: int
-    calc_status: bool # как завершено
 
 
 # Файл тестовый
 inf_defdict = dict(name_sq='Новозаречный',  # название площади
-                   fdat_name_=txtfname_def,  #  имя файла данных
+                   fdat_name_=txtfname_def,  # имя файла данных
                    full_fdat_name_='',  # полное имя файла данных с путём
                    a=a_def, b=b_def, c=c_def,  # коэффициенты a, b, c макросейсмического уравнения
                    min_mag=0.0, max_mag=10.0,  # минимальная и максимальная магнитуда
@@ -105,18 +96,19 @@ inf_defdict = dict(name_sq='Новозаречный',  # название пл�
                    work_dir='',  # внутреняя информация о папке с данными
                    finf_name_='',  # имя inf-файла
                    full_finf_name_='',  # имя inf-файла
-                   npoint = float('nan'),  # внутреняя информация - число точек в файле *.txt или xlsx
-                   typeof_input = 0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt; 3 - введен xlsx
-                   saved_in_json = 0  # 0 - текущий ввод; 1 - ввод из json
+                   npoint=float('nan'),  # внутреняя информация - число точек в файле *.txt или xlsx
+                   typeof_input=0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt; 3 - введен xlsx
+                   saved_in_json=0  # 0 - текущий ввод; 1 - ввод из json
                    )
 
 # Как я могу проверить, пуст numpy или нет?
 # https://techarks.ru/qa/python/kak-ya-mogu-proverit-pust-n-10/
 
-#--------- Квази объект "Структура данных" - (Начало)
+# --------- Квази объект "Структура данных" - (Начало)
 curr_nstruct = -1  # номер структуры данных; -1 - нет данных, 0 - первая и т.д.
 dat_struct: np.ndarray  # пустой набор данных в начале
 out_of_range = np.zeros(4, dtype=int)  # cколько раз переменная выходила за границы переменная
+
 
 def add_dat_struct(the_dict, the_nparray): # добавление данных в структуру dat_struct
     global dat_struct
@@ -134,31 +126,104 @@ def get_dat_struct(num_el: int):  # извлечение данных из ст�
     b = dat_struct[num_el, 1]
     return a, b
 
+def get_Lat_Lon_ifact():
+    (the_dict, the_arr) = get_dat_struct(curr_nstruct)
+    lat_arr1 = the_arr[:, 0]  # Lat
+    lat_arr1list = lat_arr1.tolist()
+    lat_arr = np.array(lat_arr1list)
+
+    lon_arr1 = the_arr[:, 1]  # Lat
+    lon_arr1list = lon_arr1.tolist()
+    lon_arr = np.array(lon_arr1list)
+
+    i_fact_arr1 = the_arr[:, 3]
+    i_fact_arr1list = i_fact_arr1.tolist()
+    i_fact_arr      = np.array(i_fact_arr1list)
+
+    return lat_arr, lon_arr, i_fact_arr
+
+
+def get_Lat_Lon(): # -> (np.ndarray, np.ndarray)
+    # После извлечения из структуры данных
+    # np-массив преобразуем вначале в список, а потом в другой массив,
+    # чтобы тип данных был float64, а не object
+    # далее в matplotlib триангуляции нужен именно такой тип
+    # т.е. внутри float, но контейнеры м.б. разные
+
+    # if curr_nstruct<0:
+    #     # только в Makroseis_GUI.py, когда показ карты без ввода inf,
+    #     # используя информацию о данных из Makroseis_GUI.json
+    #
+    #     pinp_proc.the_input(fname=fname, is_view=False)
+
+    (the_dict, the_arr) = get_dat_struct(curr_nstruct)
+    lat_arr1 = the_arr[:, 0]  # Lat
+    lat_arr1list = lat_arr1.tolist()
+    lat_arr = np.array(lat_arr1list)
+
+    lon_arr1 = the_arr[:, 1]  # Lat
+    lon_arr1list = lon_arr1.tolist()
+    lon_arr = np.array(lon_arr1list)
+
+    return lat_arr, lon_arr
+
+def  get_ifact():
+    (the_dict, the_arr) = get_dat_struct(curr_nstruct)
+    i_fact_arr1 = the_arr[:, 3]
+    i_fact_arr1list = i_fact_arr1.tolist()
+    i_fact_arr      = np.array(i_fact_arr1list)
+    return i_fact_arr
+
+
+def get_dat_array_for_view() -> str:
+    """
+    Объединение данных в в содну строку для просмотра в окне
+    """
+    # https://docs-python.ru/tutorial/vstroennye-funktsii-interpretatora-python/funktsija-format/
+    (the_dict, the_arr) = get_dat_struct(curr_nstruct)
+    sf = '9.3f'
+    sa = '4.0f'
+    s = ''
+    p = ' '*3
+    n = the_dict['npoint']
+    for i in range(n):
+        #                   Lat                        Lon                 Alt
+        s += format(the_arr[i, 0],sf)+p+format(the_arr[i, 1],sf)+p+format(the_arr[i, 2],sa)+p
+        #                  i_fact                       di                  N
+        s += format(the_arr[i, 3],sf)+p+format(the_arr[i, 4],sf)+p*3+format(the_arr[i, 5],sa)+p
+        # Нас.пункт
+        ss = str(the_arr[i, 6]).strip()
+        s += format(ss,'>28s')+'\n'
+    return s
+
+
 def get_a_b_c(num_el: int):  # извлечение коэффициентов a, b, c макросейсмического уравнения из структуры dat_struct
     global dat_struct
-    get_dat_struct(num_el)
+    # get_dat_struct(num_el)
     the_dict = dict(dat_struct[num_el, 0])
     a_ = the_dict["a"]
     b_ = the_dict["b"]
     c_ = the_dict["c"]
     return a_, b_, c_
 
+
 def get_ini(num_el: int):  # извлечение ini_lat, ini_lon, ini_dep, ini_mag
     global dat_struct
-    get_dat_struct(num_el)
+    # get_dat_struct(num_el)
     the_dict = dict(dat_struct[num_el, 0])
-    ini_lat_ = the_dict["ini_lat"] # начальное периближение для минимизации - широта
-    ini_lon_ = the_dict["ini_lon"] # начальное периближение для минимизации - долгота
+    ini_lat_ = the_dict["ini_lat"]  # начальное периближение для минимизации - широта
+    ini_lon_ = the_dict["ini_lon"]  # начальное периближение для минимизации - долгота
     ini_dep_ = the_dict["ini_dep"]  # начальное периближение для минимизации - глубина
     ini_mag_ = the_dict["ini_mag"]  # начальное периближение для минимизации - магнитуда
     return ini_lat_, ini_lon_, ini_dep_, ini_mag_
+
 
 def get_lim_magn_lat_lon_dep(num_el: int) -> (float, float, float, float, float, float, float, float):
     """
     извлечение данных из структуры dat_struct - границы magn, lat, lon, dep
     """
     global dat_struct
-    get_dat_struct(num_el)
+    # get_dat_struct(num_el)
     a = dict(dat_struct[num_el, 0])
     min_mag_ = a["min_mag"]; max_mag_ = a["max_mag"]
     min_lat_ = a["min_lat"]; max_lat_ = a["max_lat"]
@@ -168,11 +233,10 @@ def get_lim_magn_lat_lon_dep(num_el: int) -> (float, float, float, float, float,
     return min_mag_, max_mag_, min_lat_, max_lat_, min_lon_, max_lon_, min_dep_, max_dep_
 
 
-#
 def print_dat_struct() -> None:
     print(dat_struct)
+# --------- Квази объект "Структура данных" - (Конец)
 
-#--------- Квази объект "Структура данных" - (Конец)
 
 def work_with_line3dat(s: str):  # строка с коэффициентами макросейсмического уравнения
     part_lines2 = s.split(maxsplit=3)  # print_string(part_lines)
@@ -197,11 +261,11 @@ def control_curr_dict(curr_dict: dict) -> bool:
     curr_dict["full_fdat_name_"] = full_file_name
     path = pathlib.Path(full_file_name)
     if not path.exists():
-        print(ss_fdfpne, full_file_name) # 'путь к dat-файлу не существует = '
+        # print(ss_fdfpne, full_file_name) # 'путь к dat-файлу не существует = '
         mb.showerror(s_error, ss_fdfpne + full_file_name)
         return False
     if not path.is_file():
-        print(ss_fdfne, full_file_name) # 'dat-файл не существует = '
+        # print(ss_fdfne, full_file_name) # 'dat-файл не существует = '
         mb.showerror(s_error, ss_fdfne + full_file_name)
         return False
 
@@ -210,13 +274,13 @@ def control_curr_dict(curr_dict: dict) -> bool:
     int_b = dat_in_diap(curr_dict["b"], min_b, max_b)
     int_c = dat_in_diap(curr_dict["c"], min_c, max_c)
     if not (int_a and int_b and int_c):
-        print(ss_fmsee) # 'Ошибка в коэффициентах макросейсмического уравнения'
-        mb.showerror(s_error,ss_fmsee)
+        # print(ss_fmsee)  # 'Ошибка в коэффициентах макросейсмического уравнения'
+        mb.showerror(s_error, ss_fmsee)
         return False
     int_m = dat2_in_diap(curr_dict["min_mag"], curr_dict["max_mag"], min_m, max_m)
     if not int_m:
-        print(ss_fmde) # 'Ошибка в диапазоне магнитуд'
-        mb.showerror(s_error,ss_fmsee)
+        # print(ss_fmde)  # 'Ошибка в диапазоне магнитуд'
+        mb.showerror(s_error, ss_fmsee)
         return False
     int_lat = dat2_in_diap(curr_dict["min_lat"], curr_dict["max_lat"], min_lat, max_lat)
     if not int_lat:
@@ -243,7 +307,8 @@ def input_inf(fname, is_view=False) -> (bool, object):
     """
     Ввод информации из файлв
     """
-    s: str; s2: str
+    s: str;
+    s2: str
     # if isview: print('fname =', fname)
     # https://askdev.ru/q/numpy-dobavit-stroku-v-massiv-20857/
     file_exist: bool = os.path.isfile(fname)
@@ -275,22 +340,22 @@ def input_inf(fname, is_view=False) -> (bool, object):
                 (curr_dict["min_lon"], curr_dict["max_lon"]) = work_with_line2dat(part_lines[0].strip())
             elif i == 6:
                 (curr_dict["min_dep"], curr_dict["max_dep"]) = work_with_line2dat(part_lines[0].strip())
-            elif i == 7: # начальное приближение кооординаты
+            elif i == 7:  # начальное приближение кооординаты
                 s2 = part_lines[0].strip()
                 n = num_words_in_string(s2)
-                if n==2:     # если 2 числа, то координаты явно указаны.
+                if n == 2:     # если 2 числа, то координаты явно указаны.
                     (curr_dict["ini_lat"], curr_dict["ini_lon"]) = work_with_line2dat(s2)
                     curr_dict["calc_ini"] = False
-                elif n==1:   # если 1 число, то указано по скольки координатам брать среднее
-                    dd:float = float(re.sub(r'\D', '', s2))
+                elif n == 1:   # если 1 число, то указано по скольки координатам брать среднее
+                    dd: float = float(re.sub(r'\D', '', s2))
                     curr_dict["calc_ini"] = True
                     curr_dict["ini_lat"] = -dd
                     curr_dict["ini_lon"] = -dd
-                else: # не 1 или 2 числа
+                else:  # не 1 или 2 числа
                     curr_dict["calc_ini"] = True
                     curr_dict["ini_lat"] = -1
                     curr_dict["ini_lon"] = -1
-            elif i == 8: # добавленная новая строка с начльным приближением по магнитуде и глубине
+            elif i == 8:  # добавленная новая строка с начльным приближением по магнитуде и глубине
                 s2 = part_lines[0].strip()
                 n = num_words_in_string(s2)
                 (curr_dict["ini_mag"], curr_dict["ini_dep"]) = work_with_line2dat(part_lines[0].strip())
@@ -309,23 +374,27 @@ def input_inf(fname, is_view=False) -> (bool, object):
             curr_dict["ini_mag"] = ini_mag
         if curr_dict["ini_dep"] == nan:
             curr_dict["ini_dep"] == ini_dep
-        if is_view: print(curr_dict)
+        if is_view:
+            print(curr_dict)
+        # print("work_dir = ", curr_dict["work_dir"])
         return file_exist, curr_dict
 
+
 # @numba.njit
-def calc_distance(lat_arr: float, lon_arr: float, h_arr: float, lat: float, lon: float, dep: float)-> float:
+def calc_distance(lat_arr: float, lon_arr: float, h_arr: float, lat: float, lon: float, dep: float) -> float:
     """
     Вычисление расстояния (км) между 2 точками с заданными координатами
     h_arr, dep - в км
     """
     len_pnt: float = calc_geogr_dist(lat_arr, lon_arr, lat, lon)
-    dat:float = math.sqrt(len_pnt**2 +(h_arr + dep)**2 )
+    dat: float = math.sqrt(len_pnt**2 + (h_arr + dep)**2)
     return dat
+
 
 # @numba.njit
 def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
-                       lat_: float, lon_: float, dep_: float, mag_:float,
-                       a: float, b: float, c: float )-> float:
+                       lat_: float, lon_: float, dep_: float, mag_: float,
+                       a: float, b: float, c: float) -> float:
     """
     Функция для минимизации
     Входные данные
@@ -338,23 +407,24 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
     global curr_nstruct
     f_curr: float
     (min_mag_, max_mag_, min_lat_, max_lat_, min_lon_, max_lon_, min_dep_, max_dep_) = get_lim_magn_lat_lon_dep(curr_nstruct)
-    f: float =0;
-    dist: float
+    f: float =0
+    dist3: float
     addd: float
     # print(a, b, c)
     for i in range(n):
         # ind_print: bool = False
-        #- Основная часть функции - сумма квадратов разностей
-        dist = calc_distance(Lat_arr[i], Lon_arr[i], H_Arr[i], lat_, lon_, dep_)
+        # - Основная часть функции - сумма квадратов разностей
+        dist3 = calc_distance(Lat_arr[i], Lon_arr[i], H_Arr[i], lat_, lon_, dep_)
         #  Первональный вариант технического задания
-        # Imod = a*mag_ - b*math.log10(dist) + c
+        # Imod = a*mag_ - b*math.log10(dist3) + c
         # Второй вариант, 2007_Уpавнение макpоcейcмичеcкого поля c конвеpгентным pешением_Потапов.pdf, стр, 882, формула 3
-        Imod = a*mag_ - b*math.log10(dist + 0.0185*pow(10, 0.43*mag_)) + c
-        dat = (I_fact_Arr[i]- Imod)
-        f_curr = pow(dat,2)
+        # Imod = a*mag_ - b*math.log10(dist3) + c
+        Imod = a*mag_ - b*math.log10(dist3 + 0.0185*pow(10, 0.43*mag_)) + c
+        dat = (I_fact_Arr[i] - Imod)
+        f_curr = pow(dat, 2)
         f = f + f_curr
 #       f1 = copy.deepcopy(f)
-        #- Дополнительные части функции - барьерные функции по каждой переменной
+        # - Дополнительные части функции - барьерные функции по каждой переменной
         if not dat_in_diap(lat_, min_lat_, max_lat_):
             ou_lat_ = out_of_diap1proc(lat_, min_lat_, max_lat_)
             addd = lin_coeff*f_curr*ou_lat_
@@ -380,24 +450,26 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
             # out_of_range[3] += 1
             # ind_print = True; print('ou_mag =',ou_mag, end=' ')
             addd = lin_coeff*f_curr*ou_mag
-            f = f +addd
+            f = f + addd
         # if ind_print: print()
     return f
 
-def result_control(lat_: float, lon_: float, dep_: float, mag_:float) -> None:
-    indiap:bool
-    ii:int
+
+def result_control(lat_: float, lon_: float, dep_: float, mag_: float) -> None:
+    indiap: bool
+    ii: int
+    dist2: float
     print('Контроль результатов')
 
     (a, b, c) = get_a_b_c(curr_nstruct)
     (the_dict, the_arr) = get_dat_struct(curr_nstruct)
     row = the_dict["npoint"]
 
-    lat_arr = the_arr[:, 0] # Lat
+    lat_arr = the_arr[:, 0]  # Lat
     # print('lat_arr ', np.size(lat_arr)); print(lat_arr)
-    lon_arr = the_arr[:, 1] # Lat
+    lon_arr = the_arr[:, 1]  # Lat
     # print('lon_arr ', np.size(lon_arr)); print(lon_arr)
-    h_arr = the_arr[:, 2]/1000 # Alt переводим в км
+    h_arr = the_arr[:, 2]/1000  # Alt переводим в км
     # print('h_arr ', np.size(h_arr)); print(h_arr)
     i_fact_arr = the_arr[:, 3]
     # print('i_fact_arr ', np.size(i_fact_arr)); print(i_fact_arr)
@@ -409,10 +481,9 @@ def result_control(lat_: float, lon_: float, dep_: float, mag_:float) -> None:
     i_right_edge = i_fact_arr + di
     ii = 0
     for i in range(row):
-        dist = calc_distance(lat_arr[i], lon_arr[i], h_arr[i], lat_, lon_, dep_)
-        imod [i] = a*mag_ - b*math.log10(dist + 0.0185*pow(10, 0.43*mag_)) + c
-        indiap = dat_in_diap(imod [i], i_left_edge[i], i_right_edge[i])
+        dist2 = calc_distance(lat_arr[i], lon_arr[i], h_arr[i], lat_, lon_, dep_)
+        imod[i] = a*mag_ - b*math.log10(dist2 + 0.0185*pow(10, 0.43*mag_)) + c
+        indiap = dat_in_diap(imod[i], i_left_edge[i], i_right_edge[i])
         ii = ii + int(indiap)
-        print(i,' ',indiap, '   ', i_left_edge[i], imod [i], i_right_edge[i])
+        print(i, ' ', indiap, '   ', i_left_edge[i], imod[i], i_right_edge[i])
     print('Всего значений в диапазоне ', ii)
-
