@@ -46,26 +46,26 @@ import json
 p_width: int = 1400  # ширина окна программы
 p_height: int = 900  # высота окна программы
 
-view_inf_fw = 1150  # ширина окна проcмотра inf-файла
-view_inf_fh = 400  # высота окна проcмотра inf-файла
+view_inf_fw: int = 1150  # ширина окна проcмотра inf-файла
+view_inf_fh: int = 400  # высота окна проcмотра inf-файла
 
-view_datt_fw = 1150  # ширина окна проcмотра dat-файла txt
-view_datt_fh = 800  # высота окна проcмотра dat-файла  txt
+view_datt_fw: int = 1150  # ширина окна проcмотра dat-файла txt
+view_datt_fh: int = 800  # высота окна проcмотра dat-файла  txt
 
-view_datx_fw = 900  # ширина окна проcмотра dat-файла  xls
-view_datx_fh = 800  # высота окна проcмотра dat-файла  xls
+view_datx_fw: int = 900  # ширина окна проcмотра dat-файла  xls
+view_datx_fh: int = 800  # высота окна проcмотра dat-файла  xls
 
-view_map_fw = 1150  # ширина окна проcмотра карты
-view_map_fh = 800  # высота окна проcмотра карты
+view_map_fw: int = 1140  # ширина окна проcмотра карты
+view_map_fh: int = 780  # высота окна проcмотра карты
 
-view_graph_fw = 1150  # ширина окна проcмотра графика
-view_graph_fh = 800  # высота окна проcмотра графика
+view_graph_fw: int = 1140  # ширина окна проcмотра графика
+view_graph_fh: int = 780  # высота окна проcмотра графика
 
-view_par_fw = 750  # ширина окна проcмотра параметров минимизации
-view_par_fh = 200  # высота окна проcмотра параметров минимизации
+view_par_fw: int = 750  # ширина окна проcмотра параметров минимизации
+view_par_fh: int = 200  # высота окна проcмотра параметров минимизации
 
-view_res_fw = 450  # ширина окна проcмотра результатов минимизации
-view_res_fh = 220  # высота окна проcмотра результатов минимизации
+view_res_fw: int = 450  # ширина окна проcмотра результатов минимизации
+view_res_fh: int = 220  # высота окна проcмотра результатов минимизации
 
 
 vf_width: int = 700  # ширина окна просмотра
@@ -159,6 +159,9 @@ class MakroseisGUI(Frame):
 
         main.title(win_name)
         (self.scr_w, self.scr_h, form_w_, form_h_, addx, addy) = mainform_positioning(main, p_width, p_height)
+        # print('self.scr_w, self.scr_h')
+        # print(self.scr_w, self.scr_h)
+
         # main.geometry(root_geometry_string_auto(main, p_width, p_heiht)) # 1920x1080 мой монитор
         main.geometry(root_geometry_string(form_w_, form_h_, addx, addy))
         # Python Tkinter, как запретить расширять окно программы на полный экран?
@@ -508,9 +511,15 @@ class MakroseisGUI(Frame):
             # Lon   Lat   I_fact ini_lon ini_lat
             (xmap, ymap, zmap, xini, yini) = self.f_get_macro_and_ini()
             (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_map_fw, view_map_fh)
+            # print('f_view_map_ini')
+            # print('self.scr_w, self.scr_h');             print(self.scr_w, self.scr_h)
+            # print('view_map_fw, view_map_fh');            print(view_map_fw, view_map_fh)
+            # print('addx, addy');            print(addx, addy)
+
             map_name = 'Участок ' + self.dict_struct["name_sq"]+'. Карта интенсивности I_fact и точка начального приближения'
             self.dialog = CViewMap2(self.master, sf_vimap, map_name, root_geometry_string(form_w_, form_h_, addx, addy),
                                     xmap, ymap, zmap, xini, yini, None, True)
+            self.dialog.go()
 
     def file_exit_(self):
         # https://ru.stackoverflow.com/questions/459170
@@ -614,6 +623,7 @@ class MakroseisGUI(Frame):
             map_name = 'Участок ' + self.dict_struct["name_sq"]+'. Карта интенсивности I_fact, всех результатов и выбранного результата минимизации'
             self.dialog = CViewMap2(self.master, ss_cvrmap, map_name, root_geometry_string(form_w_, form_h_, addx, addy),
                                     xmap, ymap, zmap, xres, yres, lat_lon_list, False)
+            self.dialog.go()
 
     def calc_view_graph_res_event(self):
         self.f_view_graph_res()
@@ -640,7 +650,7 @@ class MakroseisGUI(Frame):
         # hypo_lat = self.res_dict['lat_']
         # hypo_lon = self.res_dict['lon_']
         # hypo_dep = self.res_dict['dep_']
-        print(hypo_lat,' ',hypo_lon,' ', hypo_dep)
+        # print(hypo_lat,' ',hypo_lon,' ', hypo_dep)
         for i in range(n):
                           # Длина, I_fact, I_mod
             curr_lat = the_arr[i, 0]
@@ -653,7 +663,7 @@ class MakroseisGUI(Frame):
         # сортировка по длине
         # https://ru.stackoverflow.com/questions/1066887/Сортировка-двумерного-массива-по-1-элементу
         spec_list.sort(key=lambda x: x[0])
-        print(spec_list)
+        # print(spec_list)
         return spec_list
 
     # ToDo 2) Сделать вывод таблицы для num=106 с рассчитанными расстояниями и интенсивностями
@@ -674,6 +684,7 @@ class MakroseisGUI(Frame):
             map_name = 'Участок ' + self.dict_struct["name_sq"]+'. Графики исходной (синий) и расчитанной ' +str(num)+' (краcный) интенсивности'
             self.dialog = CViewGraph(self.master, sc_gres, map_name, root_geometry_string(form_w_, form_h_, addx, addy),
                                     x_len, y_i_fact, y_i_mod)
+            self.dialog.go()
 
     def f_view_graph_res(self):
         if self.dict_struct['typeof_input'] != 1:
@@ -782,6 +793,7 @@ class CViewGraph:
         self.slave.title(win_title)
         self.slave.geometry(the_root_geometry_string)
         self.frame = Frame(self.slave)
+        self.frame.pack(side=BOTTOM)
 
         # self.frame.fig = mpl.figure.Figure(figsize=(5, 5), dpi=100)
         # self.frame.a = self.frame.fig.add_subplot(111)
@@ -802,6 +814,7 @@ class CViewGraph:
         self.frame.canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
         self.frame.canvas._tkcanvas.pack(side=BOTTOM, fill=BOTH, expand=True)
 
+    def go(self):
         self.newValue = None
         self.slave.grab_set()
         self.slave.focus_set()
@@ -817,6 +830,7 @@ class CViewMap2:
         self.slave.title(win_title)
         self.slave.geometry(the_root_geometry_string)
         self.frame = Frame(self.slave)
+        self.frame.pack(side=BOTTOM)
 
         # self.frame.fig = mpl.figure.Figure(figsize=(5, 5), dpi=300)
         # self.frame.a = self.frame.fig.add_subplot(111)
@@ -837,7 +851,7 @@ class CViewMap2:
                 xmap1 = float(lat_lon_list[i][1])
                 ymap1 = float(lat_lon_list[i][0])
                 # print()
-                self.frame.ax2.plot(xmap1, ymap1, 'ko', ms=4, color="yellow")  # green
+                self.frame.ax2.plot(xmap1, ymap1, 'o', ms=4, color="yellow")  # green
 
         if self.is_ini_map: # Карта исходных данных
             (lat_arr, lon_arr, ifact_arr) = pinp_struct.get_Lat_Lon_ifact()
@@ -851,8 +865,8 @@ class CViewMap2:
 
 
         self.frame.fig.colorbar(cntr2, ax=self.frame.ax2)
-        self.frame.ax2.plot(xini, yini, 'ko', ms=12, color = "red")
-        self.frame.ax2.plot(xmap, ymap, 'ko', ms=3, color = "orange") # green
+        self.frame.ax2.plot(xini, yini, 'o', ms=12, color = "red")  #ko
+        self.frame.ax2.plot(xmap, ymap, 'o', ms=3, color = "orange") #
         self.frame.ax2.set(xlim=(min(xmap), max(xmap)), ylim=(min(ymap), max(ymap)))
         self.frame.ax2.set_title(map_name, fontsize=15, fontname='Times New Roman')
         self.frame.ax2.grid()
@@ -863,6 +877,7 @@ class CViewMap2:
         self.frame.canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
         self.frame.canvas._tkcanvas.pack(side=BOTTOM, fill=BOTH, expand=True)
 
+    def go(self):
         self.newValue = None
         self.slave.grab_set()
         self.slave.focus_set()

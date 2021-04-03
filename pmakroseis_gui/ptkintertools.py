@@ -51,14 +51,15 @@ def center_form_positioning(scr_w: int, scr_h: int, pr_width: int, pr_height: in
         add_width_ = 0
         w_ = scr_w
     else:
-        add_width_ = (scr_w-pr_width) // 2
+
+        add_width_ = round((scr_w-pr_width) / 2)
         w_ = pr_width
 
     if pr_height >= scr_h:
         add_height_ = 0
         h_ = scr_h
     else:
-        add_height_ = round((scr_h-pr_height) / 2.5)
+        add_height_ = round((scr_h-pr_height) / 2)
         h_ = pr_height
     return w_, h_, add_width_, add_height_
 
@@ -75,14 +76,14 @@ def mainform_positioning(tkinter_Tk, pr_width: int, pr_height: int) -> (int, int
         add_width_ = 0
         w_ = scr_w
     else:
-        add_width_ = (scr_w-pr_width) // 2
+        add_width_ = round((scr_w-pr_width) / 2)
         w_ = pr_width
 
     if pr_height >= scr_h:
         add_height_ = 0
         h_ = scr_h
     else:
-        add_height_ = round((scr_h-pr_height) / 2.5)
+        add_height_ = round((scr_h-pr_height) / 2)
         h_ = pr_height
     return scr_w, scr_h, w_, h_, add_width_, add_height_
 
