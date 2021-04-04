@@ -634,7 +634,11 @@ class MakroseisGUI(Frame):
     def calc_i_mod_for_res(self, r, mag_:float):
         # I = a∙M –b∙log10R + c
         # вычисление для итоговых значений на основании r - расстояния от гипоцентра
-        dat = self.dict_struct['a']*mag_ - self.dict_struct['b']*math.log10(r) + self.dict_struct['c']
+        # Из pinp_struct.objective_function
+        # Imod = a*mag_ - b*math.log10(dist3 + 0.0185*pow(10, 0.43*mag_)) + c
+
+        # dat = self.dict_struct['a']*mag_ - self.dict_struct['b']*math.log10(r) + self.dict_struct['c']
+        dat = self.dict_struct['a'] * mag_ - self.dict_struct['b'] * math.log10(r + 0.0185*pow(10, 0.43*mag_)) + self.dict_struct['c']
         return dat
 
     def calc_len_2intens(self, num_res) -> list:
