@@ -187,7 +187,9 @@ def get_true_result(result_list: list) -> (int, float, float, float, float, floa
     num = 0
     for i in range(1, llen):
         d = result_list[i]
-        if abs(d[9]) < gran:
+        f_ = d[4]
+        df_ = abs(d[9])
+        if ((i != 1) and (df_ < gran)) or (f_ < gran):
             num = i
             break
 

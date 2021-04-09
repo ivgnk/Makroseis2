@@ -7,6 +7,9 @@ email igenik@rambler.ru
 """
 # Файл ptkinter_menu_proc
 
+# -- События
+VirtualEvents=['<<Test_Param_1>>', '<<Test_Param_2>>', '<<Test_Param_3>>']
+
 # -- Значки и иконки
 ico_progr = r'graphics\Земл144.ico'
 ico_input_inf_ = r'graphics\open_73704.png'
@@ -79,8 +82,11 @@ sf_ferror = "Ошибка в файле"
 sf_finfni = "inf-файл не введен".center(30)
 sf_err_ext = ss_fnsf.center(40)
 
-# -- Для подменю "Расчет"
-
+# -- Для подменю "Настройки"
+so_testparam = 'Ввод параметров для тестирования алгоритма'
+so_m1tsqunifom = 'Тестирование: квадрат, равномерная сетка'
+#so_m1trealdata = 'Тестирование: файл реальных данных'
+so_m1tssample = 'Тестирование: на основе inf-файла'
 
 # -- Для подменю "Помощь"
 sh_help = "Справка"

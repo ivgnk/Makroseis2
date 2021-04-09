@@ -1,7 +1,7 @@
 """
 Разные дополнительные средства для tkinter
 
-(C) 2020 Ivan Genik, Perm, Russia
+(C) 2021 Ivan Genik, Perm, Russia
 Released under GNU Public License (GPL)
 email igenik@rambler.ru
 """

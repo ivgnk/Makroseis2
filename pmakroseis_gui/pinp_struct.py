@@ -19,6 +19,10 @@ from pmain_proc import *
 from tkinter import messagebox as mb
 from ptkinter_menu_proc import *
 
+# False - простой тип макрофункци imod = a*mag_ - b*math.log10(dist2) + c
+# True - сложный тип макрофункци  imod = a*mag_ - b*math.log10(dist2 + 0.0185*pow(10, 0.43*mag_)) + c
+type_of_macro_fun = False # True
+
 test_mode = True  # тестовый режим
 makroseis_folder: str = r"Work_Lang\Python\PyCharm\Makroseis_GUI"
 makroseis_datfolder: str = r"Work_Lang\Python\PyCharm\Makroseis_GUI\Dat"
@@ -373,7 +377,7 @@ def input_inf(fname, is_view=False) -> (bool, object):
         if curr_dict["ini_mag"] == nan:
             curr_dict["ini_mag"] = ini_mag
         if curr_dict["ini_dep"] == nan:
-            curr_dict["ini_dep"] == ini_dep
+            curr_dict["ini_dep"] = ini_dep
         if is_view:
             print(curr_dict)
         # print("work_dir = ", curr_dict["work_dir"])
@@ -415,15 +419,11 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
         # ind_print: bool = False
         # - Основная часть функции - сумма квадратов разностей
         dist3 = calc_distance(Lat_arr[i], Lon_arr[i], H_Arr[i], lat_, lon_, dep_)
-        #  Первональный вариант технического задания
-        # Imod = a*mag_ - b*math.log10(dist3) + c
-        # Второй вариант, 2007_Уpавнение макpоcейcмичеcкого поля c конвеpгентным pешением_Потапов.pdf, стр, 882, формула 3
-        # Imod = a*mag_ - b*math.log10(dist3) + c
-        Imod = a*mag_ - b*math.log10(dist3 + 0.0185*pow(10, 0.43*mag_)) + c
+        Imod = macroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mag_, type_of_macro_fun_=type_of_macro_fun)
         dat = (I_fact_Arr[i] - Imod)
         f_curr = pow(dat, 2)
         f = f + f_curr
-#       f1 = copy.deepcopy(f)
+        #  f1 = copy.deepcopy(f)
         # - Дополнительные части функции - барьерные функции по каждой переменной
         if not dat_in_diap(lat_, min_lat_, max_lat_):
             ou_lat_ = out_of_diap1proc(lat_, min_lat_, max_lat_)
@@ -454,12 +454,11 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
         # if ind_print: print()
     return f
 
-
 def result_control(lat_: float, lon_: float, dep_: float, mag_: float) -> None:
     indiap: bool
     ii: int
     dist2: float
-    print('Контроль результатов')
+    # print('Контроль результатов')
 
     (a, b, c) = get_a_b_c(curr_nstruct)
     (the_dict, the_arr) = get_dat_struct(curr_nstruct)
@@ -482,8 +481,32 @@ def result_control(lat_: float, lon_: float, dep_: float, mag_: float) -> None:
     ii = 0
     for i in range(row):
         dist2 = calc_distance(lat_arr[i], lon_arr[i], h_arr[i], lat_, lon_, dep_)
-        imod[i] = a*mag_ - b*math.log10(dist2 + 0.0185*pow(10, 0.43*mag_)) + c
+        imod[i] = macroseis_fun(a=a, b=b, c=c, dist=dist2, mag=mag_, type_of_macro_fun_ = type_of_macro_fun)
         indiap = dat_in_diap(imod[i], i_left_edge[i], i_right_edge[i])
         ii = ii + int(indiap)
         print(i, ' ', indiap, '   ', i_left_edge[i], imod[i], i_right_edge[i])
     print('Всего значений в диапазоне ', ii)
+
+def macroseis_fun(a: float, b: float, c:float, dist: float, mag: float, type_of_macro_fun_: bool=False) -> float:
+    """
+    Функция для вычисления значения интенсивности
+    type_of_macro_fun_ =
+    False - простой тип макрофункци imod = a*mag_ - b*math.log10(dist2) + c
+    True - сложный тип макрофункци  imod = a*mag_ - b*math.log10(dist2 + 0.0185*pow(10, 0.43*mag_)) + c
+    """
+    if type_of_macro_fun_:
+        imod = a*mag - b*math.log10(dist + 0.0185*pow(10, 0.43*mag)) + c
+    else:
+        imod = a*mag - b*math.log10(dist) + c
+    return imod
+
+def work_macroseis_fun():
+    a = 1.5
+    b = 3.17
+    c = 2.71
+    R = 9
+    mag1 = 2
+    mag2 = 7
+    imod1 = macroseis_fun(a=a, b=b, c=c, dist=R, mag=mag1, type_of_macro_fun_ = type_of_macro_fun)
+    imod2 = macroseis_fun(a=a, b=b, c=c, dist=R, mag=mag2, type_of_macro_fun_ = type_of_macro_fun)
+    return imod1, imod2
