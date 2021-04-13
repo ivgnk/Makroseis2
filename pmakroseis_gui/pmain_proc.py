@@ -282,9 +282,13 @@ def minimize_func(n: int, lat_arr: np.ndarray, lon_arr: np.ndarray,
 
     return num, lat_, lon_, dep_, mag_, fun_, result_list
 
-def create_str_res(ini_lat_, ini_lon_, num, lat_, lon_, dep_, mag_, fun_) -> str:
+def create_str_res(name_sq, ini_lat_, ini_lon_, num, lat_, lon_, dep_, mag_, fun_) -> str:
     as_ = ' '*5
+
     str_res_ = '\n'
+    str_res_ += (as_+name_sq)
+    str_res_ += '\n'
+    str_res_ += '\n'
     str_res_ += as_+'        Начальное приближение\n'
     str_res_ += as_+'     Широта = '+format(ini_lat_,'7.3f') + '\n'
     str_res_ += as_+'    Долгота = '+format(ini_lon_,'7.3f') + '\n' + '\n'

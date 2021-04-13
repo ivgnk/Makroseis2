@@ -53,6 +53,7 @@
 # https://coderoad.ru/53659234/Как-записать-строку-в-массив-numpy
 
 # -------------------------------------------------------------------
+# pinp_proc
 
 import sys
 import openpyxl
@@ -139,11 +140,10 @@ def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -
         all_lines[i] = s.strip()
         # print(i, all_lines[i])
 
-
-    if is_view: print('Введено строк из текстового файла = ',nrow1)
+    if is_view: print('Введено строк из текстового файла = ', nrow1)
     numpy_arr = np.zeros((nrow1 - 1, ncol), dtype=object)  # первую строку заголовков не вводим
     for i in range(nrow1):
-        if (i != 0):
+        if i != 0:
             s = all_lines[i];            # print(s)
             part_lines = s.split(maxsplit=ncol1);    # print_string(part_lines)
             numpy_arr[i - 1, 0] = float(part_lines[0])  # Lat
@@ -154,7 +154,7 @@ def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -
             numpy_arr[i - 1, 5] = int(part_lines[5])    # N
             numpy_arr[i - 1, 6] = str(part_lines[6])    # Нас.пункт
             if len(part_lines) > ncol1:  # название состоит из 2 и более частей, в последней части остаток
-                 numpy_arr[i - 1, 6] = numpy_arr[i - 1, 6]+' '+str(part_lines[7])
+                numpy_arr[i - 1, 6] = numpy_arr[i - 1, 6]+' '+str(part_lines[7])
     if is_view: view_2d_array(numpy_arr, nrow1 - 1, ncol1, '2d массив NumPy заполнен из строк')
     return numpy_arr
 # --------------- def the_txt_import()
@@ -320,10 +320,49 @@ def the_input(fname: str, res_dir: str, is_view: bool) -> (bool, object):
             pmain_proc.log_file_name = create_log_filename(res_dir, fname)
             return True, thecurr_dict
 
+def the_input_test(fname: str, res_dir: str, is_view: bool) -> (bool, dict, np.ndarray):
+    (good_end, thecurr_dict) = input_inf(fname, is_view)
+    if not good_end:
+        mb.showerror(s_error, ss_fifnf)  # 'inf - файл не найден'
+        return False, None
+    else:
+        if not control_curr_dict(thecurr_dict):
+            mb.showerror(s_error, ss_feif)  # 'Ошибки в inf-файле'
+            return False, None
+        else:
+            fdat_name = name_and_ext(thecurr_dict["work_dir"], thecurr_dict["fdat_name_"])
+            if is_view: print('fdat_name = ', fdat_name)
+            numpy_arr = the_input_dat(fdat_name, is_view)
+            (row, col) = np.shape(numpy_arr)
+            if is_view: print(row, col)
+            thecurr_dict["npoint"] = row
+            # Вычисление начального приближения, если оно не задано -- Начало
+            if thecurr_dict["calc_ini"]:
+                thecurr_dict["calc_ini"] = False
+                lat_arr = numpy_arr[:, 0]  # Lat
+                # print('lat_arr ', np.size(lat_arr)); print(lat_arr)
+                lon_arr = numpy_arr[:, 1]  # Lat
+                # print('lon_arr ', np.size(lon_arr)); print(lon_arr)
+                i_fact_arr = numpy_arr[:, 3]
+                n: int = round(abs(thecurr_dict["ini_lat"]))
+                indarr = findmax_arrindex1d(i_fact_arr)
+                sum_lat: float = 0;  sum_lon: float = 0
+                for i in range(n):
+                    sum_lat = sum_lat + lat_arr[round(indarr[i])]
+                    sum_lon = sum_lon + lon_arr[round(indarr[i])]
+                thecurr_dict["ini_lat"] = sum_lat / n
+                thecurr_dict["ini_lon"] = sum_lon / n
+                thecurr_dict["calc_ini"] = False
+                if is_view: print('начальное приближение = ', thecurr_dict["ini_lat"], thecurr_dict["ini_lon"])
+            # Вычисление начального приближения, если оно не задано -- конец
+            if is_view: print_dat_struct()
+            return True, thecurr_dict, numpy_arr
+
 
 def prc(row: int, col: int) -> None:  # для проверки печать строки и столбца
     print('   row = ', row)
     print('column = ', col)
+
 
 def create_log_filename(resdir: str, inf_file_name) -> str:
     fn = gfn(inf_file_name) + '_res.xlsx'

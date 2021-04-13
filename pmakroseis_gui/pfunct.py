@@ -8,6 +8,7 @@
 
 import math
 import numpy as np
+from functools import reduce
 
 def list2d3_to_3nparray(ll:list) -> (np.ndarray, np.ndarray, np.ndarray):
     llen = len(ll)
@@ -78,6 +79,37 @@ def dat2_in_diap(dat1, dat2, dat_min, dat_max, isview: bool = False) -> bool:
     if isview:
         print(dat1, dat2, dat_min, dat_max)
     return (dat_min <= dat1) and (dat1 <= dat_max) and (dat_min <= dat2) and (dat2 <= dat_max)
+
+# ============ Работа с двумерными списками
+def find_maxn_inlist(dlist: list, npos: int, reduce_init:float):
+    # поиск в двумерном списке чисел
+    n = npos
+    def mmax(x, y):
+        nonlocal n
+        #  print('x=',x)
+        #  print('y=',y)
+        if x > y[n]:
+            return x
+        else:
+            return y[n]
+    return reduce(mmax, dlist, reduce_init)
+
+def find_maxn2_inlist(dlist: list, npos: int, nposextr: int, reduce_init:list):
+    # поиск в двумерном списке чисел и сохраение списка:
+    # наибольшее и указаннон
+    n = npos
+    nextr = nposextr
+    def mmax(x, y):
+        nonlocal n
+        nonlocal nextr
+        #  print('x=',x)
+        #  print('y=',y)
+        if x[0] > y[n]:
+            return x
+        else:
+            return [y[n], y[nextr]]
+
+    return reduce(mmax, dlist, reduce_init)
 
 
 # ============  Тестирование

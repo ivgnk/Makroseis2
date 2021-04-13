@@ -231,7 +231,7 @@ def get_lim_magn_lat_lon_dep(num_el: int) -> (float, float, float, float, float,
     a = dict(dat_struct[num_el, 0])
     min_mag_ = a["min_mag"]; max_mag_ = a["max_mag"]
     min_lat_ = a["min_lat"]; max_lat_ = a["max_lat"]
-    min_lon_ = a["min_lat"]; max_lon_ = a["max_lon"]
+    min_lon_ = a["min_lon"]; max_lon_ = a["max_lon"]
     min_dep_ = a["min_dep"]; max_dep_ = a["max_dep"]
     # print(min_mag_, max_mag_, min_lat_, max_lat_, min_lon_, max_lon_, min_dep_, max_dep_)
     return min_mag_, max_mag_, min_lat_, max_lat_, min_lon_, max_lon_, min_dep_, max_dep_
@@ -411,7 +411,8 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
     global curr_nstruct
     f_curr: float
     (min_mag_, max_mag_, min_lat_, max_lat_, min_lon_, max_lon_, min_dep_, max_dep_) = get_lim_magn_lat_lon_dep(curr_nstruct)
-    f: float =0
+    # print(min_lat_, max_lat_, min_lon_, max_lon_)
+    f: float = 0
     dist3: float
     addd: float
     # print(a, b, c)
@@ -454,6 +455,7 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
         # if ind_print: print()
     return f
 
+
 def result_control(lat_: float, lon_: float, dep_: float, mag_: float) -> None:
     indiap: bool
     ii: int
@@ -487,7 +489,8 @@ def result_control(lat_: float, lon_: float, dep_: float, mag_: float) -> None:
         print(i, ' ', indiap, '   ', i_left_edge[i], imod[i], i_right_edge[i])
     print('Всего значений в диапазоне ', ii)
 
-def macroseis_fun(a: float, b: float, c:float, dist: float, mag: float, type_of_macro_fun_: bool=False) -> float:
+
+def macroseis_fun(a: float, b: float, c: float, dist: float, mag: float, type_of_macro_fun_: bool = False) -> float:
     """
     Функция для вычисления значения интенсивности
     type_of_macro_fun_ =
@@ -500,13 +503,14 @@ def macroseis_fun(a: float, b: float, c:float, dist: float, mag: float, type_of_
         imod = a*mag - b*math.log10(dist) + c
     return imod
 
+
 def work_macroseis_fun():
     a = 1.5
     b = 3.17
     c = 2.71
-    R = 9
+    r = 9
     mag1 = 2
     mag2 = 7
-    imod1 = macroseis_fun(a=a, b=b, c=c, dist=R, mag=mag1, type_of_macro_fun_ = type_of_macro_fun)
-    imod2 = macroseis_fun(a=a, b=b, c=c, dist=R, mag=mag2, type_of_macro_fun_ = type_of_macro_fun)
+    imod1 = macroseis_fun(a=a, b=b, c=c, dist=r, mag=mag1, type_of_macro_fun_=type_of_macro_fun)
+    imod2 = macroseis_fun(a=a, b=b, c=c, dist=r, mag=mag2, type_of_macro_fun_=type_of_macro_fun)
     return imod1, imod2
