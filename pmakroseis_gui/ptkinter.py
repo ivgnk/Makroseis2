@@ -63,11 +63,22 @@ view_map_fh: int = 780  # высота окна проcмотра карты
 view_graph_fw: int = 1140  # ширина окна проcмотра графика
 view_graph_fh: int = 780  # высота окна проcмотра графика
 
+view_par2st_fw: int = 650  # ширина окна выбора нач.прибл. 2 стадии минимизации
+view_par2st_fh: int = 180  # высота окна выбора нач.прибл. 2 стадии минимизации
+
+view_par2sti_fw: int = 850  # ширина окна информации о inf-файле
+view_par2sti_fh: int = 130  # высота окна информации о inf-файле
+
+
 view_par_fw: int = 750  # ширина окна проcмотра параметров минимизации
 view_par_fh: int = 200  # высота окна проcмотра параметров минимизации
 
 view_res_fw: int = 450  # ширина окна проcмотра результатов минимизации
-view_res_fh: int = 250  # высота окна проcмотра результатов минимизации
+view_res_fh: int = 300  # высота окна проcмотра результатов минимизации
+
+view_res2_fw: int = 550  # ширина окна проcмотра результатов минимизации2
+view_res2_fh: int = 300  # высота окна проcмотра результатов минимизации2
+
 
 view_testpar_fw: int = 450  # ширина окна проcмотра параметров минимизации
 view_testpar_fh: int = 300  # высота окна проcмотра параметров минимизации
@@ -190,6 +201,7 @@ class MakroseisGUI(Frame):
         main.bind('<Control-g>', self.calc_view_graph_res_event_btn)  # построение графика
         main.bind(VirtualEvents[0], self.set_test_param1)
         main.bind(VirtualEvents[1], self.set_test_param2)
+        main.bind(VirtualEvents[2], self.set_stage2_param)
 
         # self.the_status_bar_label1.status_bar.pack(side=LEFT, fill=X)
         # self.the_status_bar_label2.status_bar.pack(side=LEFT, fill=X)
@@ -322,13 +334,15 @@ class MakroseisGUI(Frame):
         self.dict_struct["saved_in_json"] = 1
         return good_end
 
-    # def input_from_txt(self, fname: str) -> bool:
-    #     pass
-    #
-    # def input_from_xlsx(self, fname: str) -> bool:
-    #     pass
-
     # ---- Подменю Файл
+    def is_second_stage(self) -> bool:
+        t1 = abs(self.dict_struct['min_lat'] - self.dict_struct['max_lat']) < 1e-8
+        t2 = abs(self.dict_struct['min_lon'] - self.dict_struct['max_lon']) < 1e-8
+        t3 = abs(self.dict_struct['min_lat'] - self.dict_struct['ini_lat']) < 1e-8
+        t4 = abs(self.dict_struct['min_lon'] - self.dict_struct['ini_lon']) < 1e-8
+        t = t1 and t2 and t3 and t4
+        return t
+
     def input_inf_(self):
         ext_type = ''
         good_new_data = ''
@@ -345,35 +359,20 @@ class MakroseisGUI(Frame):
                 # self.dict_struct['full_finf_name_'] = fn_dat
                 # self.dict_struct['finf_name_'] =
                 self.dict_struct['typeof_input'] = 1
-        # elif the_ext == '.txt':
-        #     ext_type = 't'
-        #     good_new_data = self.input_from_txt(fn_dat)
-        #     self.dict_struct['typeof_input'] = 2
-        # elif the_ext == '.xlsx':
-        #     ext_type = 'x'
-        #     good_new_data = self.input_from_xlsx(fn_dat)
-        #     self.dict_struct['typeof_input'] = 3
-        elif the_ext == '':
-            ext_type = ''
         else:
-            ext_type = 'n'
             mb.showerror(s_error, sf_err_ext)
 
-        if ext_type == '':
-            # self.change_status_bar1(self.SBC_fdni, self.the_status_bar_label1.status_bar)
-            # self.the_status_bar_label3.status_bar['text'] = ''
-            pass
-        elif ext_type == 'n':
-            # self.change_status_bar1(self.SBC_fdni, self.the_status_bar_label1.status_bar)
-            # self.the_status_bar_label3.status_bar['text'] = ss_fnsf
-            pass
-        else:
+        if the_ext == '.inf':
             if good_new_data:
                 self.change_status_bar1(self.SBC_fdi, self.the_status_bar_label1.status_bar)
                 self.the_status_bar_label3.status_bar['text'] = fn_dat
+
+                self.dict_struct['second_stage'] = self.is_second_stage()
+                self.put_to_json()
             else:
                 self.change_status_bar1(self.SBC_fdni, self.the_status_bar_label1.status_bar)
                 self.the_status_bar_label3.status_bar['text'] = sf_ferror
+
 
     def put_to_json(self):  # запись dict_struct в json
         # https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses
@@ -385,15 +384,6 @@ class MakroseisGUI(Frame):
         with open(json_fn, 'r') as file:
             (self.dict_struct, self.res_dict, self.res_list) = json.load(file)
             # print(self.res_dict)
-
-    def view_file(self, fname: str):
-        pass
-
-    def input_txt(self):
-        pass
-
-    def input_xlsx(self):
-        pass
 
     def f_view_inf(self) -> None:
         if self.dict_struct['full_finf_name_'] == '':
@@ -444,12 +434,6 @@ class MakroseisGUI(Frame):
         (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_datt_fw, view_datt_fh)
         self.dialog = CViewTxt(self.master, sf_vpar, root_geometry_string(form_w_, form_h_, addx, addy))
         self.dialog.go(s)  # .encode('cp1251').decode('utf-8')
-
-    def view_inf_inf_(self, event):    # еще раз просмотр файла данных, но собранного из массива np.
-        # pinp_struct.get_Lat_Lon()
-        # pinp_struct.get_ifact()
-        pass
-
 
     def create_txt_dat_str(self) -> str:
         s = '                  Lat              Lon      Alt        I_fact            dI            N                  Нас.пункт' + '\n    '
@@ -546,28 +530,36 @@ class MakroseisGUI(Frame):
 
     # ---- Подменю Расчет
     def c_calc_(self):
-        if self.dict_struct['typeof_input'] != 1:
-            mb.showerror(s_error, ss_fdni)
+        # print(self.dict_struct['second_stage'])
+        if self.dict_struct['second_stage']:
+            mb.showerror(s_error, ss_canothercalc)
         else:
-            self.change_status_bar1(self.SBC_cb, self.the_status_bar_label1.status_bar)
-            (result_bool, num, lat_, lon_, dep_, mag_, fun_, res_list_) = pmain_proc.work_with_data(is_view1 = False)
-            self.res_list = res_list_
-            if result_bool:
-                self.put_to_res_dict(num, lat_, lon_, dep_, mag_, fun_)
-                ini_lat_ = self.dict_struct['ini_lat']  # начальное приближение Lat
-                ini_lon_ = self.dict_struct['ini_lon']  # начальное приближение Lon
-                name_sq = self.dict_struct['name_sq']
-                self.put_to_json()
-                str_info = pmain_proc.create_str_res(name_sq, ini_lat_, ini_lon_, num, lat_, lon_, dep_, mag_, fun_)
-
-                (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_res_fw, view_res_fh)
-                self.dialog = CViewTxt(self.master, sc_vres, root_geometry_string(form_w_, form_h_, addx, addy))
-                self.dialog.go(str_info)  # .encode('cp1251').decode('utf-8')
-
-                self.change_status_bar1(self.SBC_ce, self.the_status_bar_label1.status_bar)
+            if self.dict_struct['typeof_input'] != 1:
+                mb.showerror(s_error, ss_fdni)
             else:
-                mb.showerror(s_error, ss_cdse)  # 'ошибка хранения данных'
-                self.change_status_bar1(self.SBC_cc, self.the_status_bar_label1.status_bar)
+                self.change_status_bar1(self.SBC_cb, self.the_status_bar_label1.status_bar)
+                (result_bool, num, lat_, lon_, dep_, mag_, fun_, res_list_) = pmain_proc.work_with_data(is_view1 = False)
+                self.res_list = res_list_
+                if result_bool:
+                    self.put_to_res_dict(num, lat_, lon_, dep_, mag_, fun_)
+                    ini_lat_ = self.dict_struct['ini_lat']  # начальное приближение Lat
+                    ini_lon_ = self.dict_struct['ini_lon']  # начальное приближение Lon
+                    ini_dep_ = self.dict_struct['ini_dep']
+                    ini_mag_ = self.dict_struct['ini_mag']
+                    name_sq = self.dict_struct['name_sq']
+                    self.put_to_json()
+                    str_info = pmain_proc.create_str_res(name_sq, ini_lat_, ini_lon_, ini_dep_, ini_mag_,
+                                                         num, lat_, lon_, dep_, mag_, fun_)
+
+                    (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_res_fw, view_res_fh)
+                    self.dialog = CViewTxt(self.master, sc_vres, root_geometry_string(form_w_, form_h_, addx, addy))
+                    self.dialog.go(str_info)  # .encode('cp1251').decode('utf-8')
+
+                    self.change_status_bar1(self.SBC_ce, self.the_status_bar_label1.status_bar)
+                else:
+                    mb.showerror(s_error, ss_cdse)  # 'ошибка хранения данных'
+                    self.change_status_bar1(self.SBC_cc, self.the_status_bar_label1.status_bar)
+
 
     def put_to_res_dict(self, num: int, lat_: float, lon_: float, dep_: float, mag_: float, fun_: float):
         self.res_dict['num'] = num;         self.res_dict['lat_'] = lat_
@@ -591,9 +583,12 @@ class MakroseisGUI(Frame):
             (num, lat_, lon_, dep_, mag_, fun_) = self.get_from_res_dict()
             ini_lat_ = self.dict_struct['ini_lat']  # начальное приближение Lat
             ini_lon_ = self.dict_struct['ini_lon']  # начальное приближение Lon
-            name_sq = self.dict_struct['name_sq']
-            print(name_sq)
-            str_info = pmain_proc.create_str_res(name_sq, ini_lat_, ini_lon_, num, lat_, lon_, dep_, mag_, fun_)
+            ini_dep_ = self.dict_struct['ini_dep']
+            ini_mag_ = self.dict_struct['ini_mag']
+            name_sq  = self.dict_struct['name_sq']
+            # print(name_sq)
+            str_info = pmain_proc.create_str_res(name_sq, ini_lat_, ini_lon_, ini_dep_, ini_mag_,
+                                                 num, lat_, lon_, dep_, mag_, fun_)
 
             (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_res_fw, view_res_fh)
             self.dialog = CViewTxt(self.master, sc_vres, root_geometry_string(form_w_, form_h_, addx, addy))
@@ -652,8 +647,8 @@ class MakroseisGUI(Frame):
 
     def calc_i_mod_for_res(self, r, mag_: float):
 
-        dat = pinp_struct.macroseis_fun(a=self.dict_struct['a'], b=self.dict_struct['b'], c=self.dict_struct['c'],
-                                        dist=r, mag=mag_,  type_of_macro_fun_=pinp_struct.type_of_macro_fun)
+        dat = pinp_struct.makroseis_fun(a=self.dict_struct['a'], b=self.dict_struct['b'], c=self.dict_struct['c'],
+                                        dist=r, mag=mag_, type_of_macro_fun_=pinp_struct.type_of_macro_fun)
         return dat
 
     def calc_len_2intens(self, num_res) -> list:
@@ -684,6 +679,20 @@ class MakroseisGUI(Frame):
         # print(spec_list)
         return spec_list
 
+
+    def set_stage2_param(self, event):
+        new_dict = ptest_alg.create_2stage_dict(self.dict_struct, self.res_list, event.x)
+        new_dict['ini_mag'] = round(self.res_dict['mag_'], 5)
+        new_dict['ini_dep'] = round(self.res_dict['dep_'], 5)
+        # print(self.dict_struct['finf_name_'])
+        # print(new_dict['finf_name_'])
+        # view_par_fw
+        (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_par2sti_fw, view_par2sti_fh)
+        self.dialog = CViewTxt(self.master, sc_nif, root_geometry_string(form_w_, form_h_, addx, addy), 'Times 14')
+        self.dialog.go('\n\n'+(new_dict['full_finf_name_']).center(len(new_dict['full_finf_name_'])+20))  # .encode('cp1251').decode('utf-8')
+        ptest_alg.write_inf2(new_dict)
+        #  print(new_dict['full_finf_name_'])
+
     # ---- Подменю Тестирование
     def set_test_param1(self, event):
         (lat_, lon_, ifact_, ini_lat, ini_lon, add_str) = ptest_alg.create_test1(curr_dat_dir=self.dn_current_dat_dir,
@@ -696,6 +705,7 @@ class MakroseisGUI(Frame):
             name=pfile.gfn(self.dict_test_struct['finf_name_']), test_dict_=self.dict_test_struct, numpy_arr_=self.numpy_arr)
         add_str = self.dict_test_struct['name_sq']
         self.f_view_test_map_ini(lon_,  lat_,  ifact_, ini_lon, ini_lat, add_str)
+
 
     def t_input_param_test1(self):
         # Тестирование: квадрат, равномерная сетка
@@ -731,8 +741,49 @@ class MakroseisGUI(Frame):
         (good_end, self.dict_test_struct, numpy_arr_) = pinp_proc.the_input_test(fname=fname, res_dir=self.dn_current_res_dir, is_view=False)
         return good_end, numpy_arr_
 
-    def t_pseudo_dep(self):  # 'Псевдоинверсия: глубины'
-        pass
+    def c_input_param_2stage(self):  # Создать inf-файл для второго этапа минимизации
+        name_sq = ''
+        (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_par2st_fw,
+                                                                 view_par2st_fh)
+        name_sq = self.dict_struct['name_sq']
+        self.dialog = OInput2StageParam(self.master, ss_c2stagechoice, name_sq,
+                                        root_geometry_string(form_w_, form_h_, addx, addy), self.res_list, self.res_dict['num'])
+
+    def c_calc2st(self):
+        if not self.dict_struct['second_stage']:
+            mb.showerror(s_error, ss_canothercalc2)
+        else:
+            (res_matr, min_sum, dep_, mag_, curr_i, arr_dep, arr_mag, res_matr_lin) = ptest_alg.calc_second_stage(self.dict_struct)
+            #------------ Вывод текстовых результатов
+            name_sq  = self.dict_struct['name_sq']
+            ini_lat_ = self.dict_struct['ini_lat']
+            ini_lon_ = self.dict_struct['ini_lon']
+            ini_mag_ = self.dict_struct['ini_mag']
+            ini_dep_ = self.dict_struct['ini_dep']
+
+            # (name_sq, lat_, lon_, ini_mag_, ini_dep_, num, dep_, mag_, fun_)
+            str_info = pmain_proc.create_str_res_calc2(name_sq, ini_lat_, ini_lon_,
+                                                       ini_mag_, ini_dep_, curr_i, dep_, mag_, min_sum)
+
+            (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_res2_fw, view_res2_fh)
+            self.dialog = CViewTxt(self.master, sc_vres, root_geometry_string(form_w_, form_h_, addx, addy))
+            self.dialog.go(str_info)  # .encode('cp1251').decode('utf-8')
+            #------------ Вывод графических результатов
+            xres: float = self.res_dict['lon_']  # Результат Lon
+            yres: float = self.res_dict['lat_']  # Результат Lat
+
+            lat_lon_list = self.exract_lat_lon_list(self.res_list)
+
+            (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_map_fw, view_map_fh)
+            map_name = 'Участок ' + self.dict_struct["name_sq"]+'.\n Карта целевой функции и выбранного результата минимизации'+\
+                       '\n'+ '{ Глубина = '+format(dep_,'5.2f')+' км, магнитуда = '+format(mag_,'5.2f') +' }'
+            self.dialog = CViewMap3(self.master, ss_cvrmap, map_name, root_geometry_string(form_w_, form_h_, addx, addy),
+                                    arr_dep, arr_mag, res_matr_lin, dep_, mag_)
+            self.dialog.go()
+
+
+
+
 
     def t_pseudo_mag(self):  # 'Псевдоинверсия: магнитуды'
         pass
@@ -817,16 +868,16 @@ class MakroseisGUI(Frame):
 #       calc_menu.add_command(label=sc_gres_all, command=self.f_view_graph_res_all)  # Перебор графиков расчетной интенсивности
         calc_menu.add_separator()
         calc_menu.add_command(label="Файл: все результаты минимизации", command=self.c_view_all_res)
+        calc_menu.add_separator()
+        calc_menu.add_command(label=sc_create2stinf, command=self.c_input_param_2stage)  #
+        calc_menu.add_command(label=sc_calc2st, command=self.c_calc2st)  # Расчет, 2 стадия
         # ---- Подменю Тестирование
         test_menu = Menu(tearoff=0)
         test_menu.add_command(label=st_m1tsqunifom, command=self.t_input_param_test1)  # 'Тестирование: квадрат, равномерная сетка'
         test_menu.add_command(label=st_m1tssample, command=self.t_input_param_test2)  # 'Тестирование: на основе inf-файла'
-        # test_menu.add_separator()
-        # test_menu.add_command(label=st_pseudo_dep, command=self.t_pseudo_dep)  #
         # test_menu.add_command(label=st_pseudo_mag, command=self.t_pseudo_mag)  #
 
         # ---- Подменю Настройки
-        # ---- Подменю Тесстирование
         # opti_menu = Menu(tearoff=0)
         # opti_menu.add_command(label=so_menufont, command=self.o_menufont) # 'Тестирование: квадрат, равномерная сетка'
         # opti_menu.add_command(label="Настройка сохранения")
@@ -848,7 +899,7 @@ class MakroseisGUI(Frame):
 
 
 class CViewTxt:
-    def __init__(self, master, win_title: str, the_root_geometry_string: str):
+    def __init__(self, master, win_title: str, the_root_geometry_string: str, font_str: str =''):
         self.slave = Toplevel(master)
         self.slave.iconbitmap(ico_progr)
         self.slave.title(win_title)
@@ -857,7 +908,10 @@ class CViewTxt:
         self.frame.pack(side=BOTTOM)
         # Python - Tkinter Text
         # https://www.tutorialspoint.com/python/tk_text.htm
-        self.text = Text(self.slave, background='white', exportselection=0)  #
+        if font_str =='':
+            self.text = Text(self.slave, background='white', exportselection=0)
+        else:
+            self.text = Text(self.slave, background='white', exportselection=0, font=font_str)
         self.text.pack(side=TOP, fill=BOTH, expand=YES)
 
     def go(self, my_text=''):
@@ -916,6 +970,56 @@ class OInputParamTest:
         else:
             self.root.event_generate(VirtualEvents[1], x=self.slave.frame.combo1.get(), y=self.slave.frame.combo2.get())
         # print(self.slave.frame.combo.get())
+        self.slave.destroy()
+
+
+class OInput2StageParam:
+    def __init__(self, master, win_title: str, sq_name: str, the_root_geometry_string: str, res_list: list, res_choice_n: int):
+        self.root = master
+        self.res_list_ = res_list
+        # self.res_choice_num = res_choice_n
+        self.slave = Toplevel(master)
+        self.slave.iconbitmap(ico_progr)
+        self.slave.title(win_title)
+        self.slave.geometry(the_root_geometry_string)
+
+        def_fnt = ("Times New Roman", 14)
+        self.slave.frame = Frame(self.slave)
+        self.slave.frame.pack(side=BOTTOM)  # , padx=20, pady=20
+        # -------------  Выбор числа минимумов
+        self.slave.frame.label = Label(self.slave, height=3, font=def_fnt)
+        self.slave.frame.label['text'] = sq_name + '\n' + 'Номер   Широта    Долгота'
+        self.slave.frame.label.pack(side=TOP)
+
+        self.slave.frame.combo1 = ttk.Combobox(self.slave, values=self.get_list_forcombo(), font=def_fnt, width=25)
+        self.slave.frame.combo1.current(res_choice_n)
+        self.slave.frame.combo1.pack(side=TOP)
+        # ------------- Кнопки
+        nc = 10
+        npadx = 120
+        self.slave.frame.btnOK = Button(self.slave, text="OK".center(nc, ' '), font=def_fnt, command=self.cmd_ok)  #
+        self.slave.frame.btnOK.pack(side=LEFT, padx=npadx)
+        self.slave.frame.btnCnc = Button(self.slave, text="Отмена".center(nc, ' '), font=def_fnt,
+                                         command=self.slave.destroy)  #
+        self.slave.frame.btnCnc.pack(side=RIGHT, padx=npadx)
+        # ------------- Инициализация окна
+        self.newValue = None
+        self.slave.grab_set()
+        self.slave.focus_set()
+        self.slave.wait_window()
+
+    def get_list_forcombo(self) -> list:
+        llist = []
+        for i in range(len(self.res_list_)):
+            llist.append((str(i)).rjust(8)+format(self.res_list_[i][0], '6.4f').rjust(12)+format(self.res_list_[i][1], '6.4f').rjust(12))
+        return llist
+
+    def cmd_ok(self):
+        # print(self.slave.frame.combo.get())
+        # https://stackoverflow.com/questions/31798723/tkinter-generate-and-invoke-virtual-event-between-different-widgets
+        s = self.slave.frame.combo1.get()
+        ll = s.split(); llint = int(ll[0])
+        self.root.event_generate(VirtualEvents[2], x=llint)
         self.slave.destroy()
 
     # def go(self):
@@ -1026,7 +1130,75 @@ class CViewMap2:
         self.slave.wait_window()
 
 
-class CViewMap3:  # Рисование на главном окне
+class CViewMap3:
+    # https://ru.stackoverflow.com/questions/602148/Отрисовка-графиков-посредством-matplotlib-в-окне-tkinter
+    def __init__(self, master, win_title: str, map_name: str, the_root_geometry_string: str,
+                 xmap: np.ndarray, ymap: np.ndarray, zmap: np.ndarray, xini: float, yini: float):
+        self.slave = Toplevel(master)
+        self.slave.iconbitmap(ico_progr)
+        self.slave.title(win_title)
+        self.slave.geometry(the_root_geometry_string)
+        self.frame = Frame(self.slave)
+        self.frame.pack(side=BOTTOM)
+
+        # self.frame.fig = mpl.figure.Figure(figsize=(5, 5), dpi=300)
+        # self.frame.a = self.frame.fig.add_subplot(111)
+        # self.frame.a.plot([1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 1, 3, 8, 9, 3, 5])
+        # self.frame.canvas = FigureCanvasTkAgg(self.frame.fig, self.slave)
+        # self.frame.canvas.draw()
+        # self.frame.canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
+        # self.frame.canvas._tkcanvas.pack(side=BOTTOM, fill=BOTH, expand=True)
+        ncolors = 20
+        self.frame.fig,  self.frame.ax2 = plt.subplots(nrows=1)
+        levels_ = pfunct.calc_log_levels(zmap, nlevel = ncolors)
+        # Изолинии
+        self.frame.ax2.tricontour(xmap, ymap, zmap, levels_, linewidths=0.5, colors='k')
+        # cntr2 = self.frame.ax2.tricontourf(xmap, ymap, zmap, levels=24, cmap="RdBu_r")
+        # Цветовые схемы
+        # https://matplotlib.org/2.0.2/examples/color/colormaps_reference.html
+        # cmap = plt.get_cmap('viridis', 21))
+        # cmap="RdBu_r" 'RdYlGn_r
+        cmap2 = 'pink'
+        cntr2 = self.frame.ax2.tricontourf(xmap, ymap, zmap, levels_, cmap=cmap2) # cmap="RdBu_r" cmap=pfunct.red2blue_21colors()
+
+        # n = len(xmap)
+        # for i in range(n):
+        #     self.frame.ax2.plot(xmap[i], ymap[i], 'o', ms=4, color="yellow")  # green
+
+        # if self.is_ini_map: # Карта исходных данных
+        #     (lat_arr, lon_arr, ifact_arr) = pinp_struct.get_Lat_Lon_ifact()
+        #     n = len(lat_arr)
+        #     for i in range(n):
+        #         xmap1 = float(lon_arr[i])
+        #         ymap1 = float(lat_arr[i])
+        #         zmap1 = float(ifact_arr[i])
+        #         # https://pythonru.com/biblioteki/pyplot-uroki
+        #         self.frame.ax2.text(xmap1, ymap1, format(zmap1, '2.1f'), fontsize=6)  # green
+
+        self.frame.fig.colorbar(cntr2, ax=self.frame.ax2, label='Значения целевой функции')
+        self.frame.ax2.plot(xini, yini, 'o', ms=12, color="red")  # ko
+        # self.frame.ax2.plot(xmap, ymap, 'o', ms=3, color="orange")
+        self.frame.ax2.set(xlim=(min(xmap), max(xmap)), ylim=(min(ymap), max(ymap)))
+        self.frame.ax2.set_title(map_name, fontsize=15, fontname='Times New Roman')
+        self.frame.ax2.set_xlabel('Глубина, км')
+        self.frame.ax2.set_ylabel('Магнитуда')
+        self.frame.ax2.grid()
+        # self.frame.a = self.frame.fig.add_subplot(111)
+        # self.frame.a.draw()
+        self.frame.canvas = FigureCanvasTkAgg(self.frame.fig, self.slave)
+        self.frame.canvas.draw()
+        self.frame.canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
+        self.frame.canvas._tkcanvas.pack(side=BOTTOM, fill=BOTH, expand=True)
+
+    def go(self):
+        self.newValue = None
+        self.slave.grab_set()
+        self.slave.focus_set()
+        self.slave.wait_window()
+
+
+
+class CViewMap3__:  # Рисование на главном окне
     # https://ru.stackoverflow.com/questions/602148/Отрисовка-графиков-посредством-matplotlib-в-окне-tkinter
     def __init__(self, master):
         self.fig = mpl.figure.Figure(figsize=(5, 5), dpi=300)

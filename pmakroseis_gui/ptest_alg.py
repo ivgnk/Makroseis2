@@ -6,12 +6,92 @@ Released under GNU Public License (GPL)
 email igenik@rambler.ru
 """
 # ptest_alg
+
 import numpy as np
+import numba
 import codecs
 import random
 import pfunct
+import pathlib
+import copy
+import geogr_distance
 from pinp_struct import *
 from math import *
+
+
+def calc_dist_onsurf(latP: float, lonP:float, lat_arr:np.ndarray, lon_arr:np.ndarray) -> np.ndarray:
+    n = len(lat_arr)
+    distarr = np.random.random(n)
+    for i in range(n):
+        r = geogr_distance.calc_geogr_dist(latP, lonP, lat_arr[i], lon_arr[i])
+        distarr[i] = r
+    return distarr
+
+
+def calc_second_stage(base_dict_: dict) -> (np.ndarray, float, float, float, int, np.ndarray, np.ndarray, np.ndarray):  # -> (float, float, float, float, int, list):
+    step_ = 0.1  # шаг изменения для глубин и магнитуд
+    ndep = round((base_dict_['max_dep'] - base_dict_['min_dep'])/step_ + 1)
+    nmag = round((base_dict_['max_mag'] - base_dict_['min_mag'])/step_ + 1)
+    the_arr = pinp_struct.dat_struct[pinp_struct.curr_nstruct, 1]
+    n = len(the_arr)
+    lat_arr = the_arr[:, 0]
+    lon_arr = the_arr[:, 1]
+    alt_arr = the_arr[:, 2]/1000
+    ifact_arr = the_arr[:, 3]
+    dist_onsurf = calc_dist_onsurf(base_dict_['ini_lat'], base_dict_['ini_lon'], lat_arr, lon_arr)
+    dist_onsurf2 = dist_onsurf*dist_onsurf
+    res_matr = np.zeros((ndep, nmag), dtype=float)
+    arr_dep = np.zeros(ndep*nmag, dtype=float)
+    arr_mag = np.zeros(ndep*nmag, dtype=float)
+    res_matr_lin = np.zeros(ndep*nmag, dtype=float)
+    min_sum = 1e308; dep_ = -13.0; mag_ = -13.0; curr_i:int = 0
+    for i in range(ndep):
+        curr_dep = base_dict_['min_dep']+i*step_
+        for j in range(nmag):
+            curr_mag = base_dict_['min_mag']+j*step_
+            ssum = 0.0
+            for k in range(n):
+                dist = sqrt(dist_onsurf2[k] + (alt_arr[k]+curr_dep)**2)
+                imod = makroseis_fun(base_dict_['a'], base_dict_['b'], base_dict_['c'], dist, curr_mag, pinp_struct.type_of_macro_fun)
+                ssum = ssum + (imod-ifact_arr[k])**2
+            res_matr[i, j] = ssum
+            res_matr_lin[curr_i] = ssum
+            arr_dep[curr_i] = curr_dep
+            arr_mag[curr_i] = curr_mag
+            curr_i = curr_i +1
+            if ssum < min_sum:
+                min_sum = ssum
+                dep_ = curr_dep
+                mag_ = curr_mag
+    return res_matr, min_sum, dep_, mag_, curr_i, arr_dep, arr_mag, res_matr_lin
+    # return res_lat, res_lon, res_dep, res_mag, nres_, res_list_
+
+def create_2stage_dict(base_dict_: dict, res_list: list, res_choice_n: int) -> dict:
+    """
+    Создание словаря для inf-файла второй стадии минимизации
+    """
+    llist = res_list[res_choice_n]
+    lat = round(llist[0], 5)
+    lon = round(llist[1], 5)
+    # print(lat, ' ', lon)
+    base_dict = copy.deepcopy(base_dict_)
+    base_dict['finf_name_'] = 'st2_'+base_dict['finf_name_']
+    base_dict['name_sq'] = base_dict['name_sq']+' 2 стадия'
+    base_dict['ini_lat'] = lat; base_dict['ini_lon'] = lon
+    base_dict['min_lat'] = lat; base_dict['min_lon'] = lon
+    base_dict['max_lat'] = lat; base_dict['max_lon'] = lon
+    # print(base_dict['work_dir'])
+    base_dict["full_finf_name_"] = "\\".join([base_dict["work_dir"], base_dict["finf_name_"]])
+    # print(base_dict["full_finf_name_"])
+
+    base_dict['min_mag'] =  round(base_dict['min_mag'], 1)
+    base_dict['max_mag'] =  round(base_dict['max_mag'], 1)
+    base_dict['min_dep'] =  round(base_dict['min_dep'], 1)
+    base_dict['max_dep'] =  round(base_dict['max_dep'], 1)
+    if abs(base_dict['min_mag']) < 1e-8:  base_dict['min_mag'] = 0.1
+    if abs(base_dict['min_dep']) < 1e-8:  base_dict['min_dep'] = 0.1
+
+    return base_dict
 
 
 def create_test_dict(name_sq_: str, fdat_nam_: str, wrk_dr: str, finf_nm: str):
@@ -154,7 +234,7 @@ def calc_test_grid_write_txt(test_dict_, full_txt_fname: str, point_list: list, 
 
 #  def calc_distance(lat_arr: float, lon_arr: float, h_arr: float, lat: float, lon: float, dep: float) -> float:
                 dist3 = calc_distance(lat_g, lon_g, alt, lat, lon, dep)
-                i_curr_mod = macroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mgn, type_of_macro_fun_=type_of_macro_fun)
+                i_curr_mod = makroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mgn, type_of_macro_fun_=type_of_macro_fun)
                 i_curr_mod = i_curr_mod if i_curr_mod > 0 else 0
                 if is_view: print(lat_g, lon_g, alt, lat, lon, dist3, i_curr_mod)
                 sum_i = sum_i + i_curr_mod
@@ -198,6 +278,25 @@ def write_inf(test_dict_, full_inf_name: str, lat_ini: float, lon_ini: float):
     with open(full_inf_name, 'wb') as fh:
         fh.write(data.encode('cp1251'))
 
+def write_inf2(the_dict):
+    f = open(the_dict['full_finf_name_'], mode='w', encoding='utf-8')
+    f.write(the_dict['name_sq']+' ; название площади'+'\n')
+    f.write(the_dict['fdat_name_'] + ' ; файл данных'+'\n')
+    s = cnv2str(the_dict['a'], the_dict['b'], the_dict['c']) + '; коэффициенты a, b, c макросейсмического уравнения'+'\n'
+    f.write(s)  # cp1251
+    f.write(cnv2str(the_dict['min_mag'], the_dict['max_mag']) + '; минимальная и максимальная магнитуда'+'\n')
+    f.write(cnv2str(the_dict['min_lat'], the_dict['max_lat']) + '; минимальная и максимальная широта, десятичные градусы'+'\n')
+    f.write(cnv2str(the_dict['min_lon'], the_dict['max_lon']) + '; минимальная и максимальная долгота, десятичные градусы'+'\n')
+    f.write(cnv2str(the_dict['min_dep'], the_dict['max_dep']) + '; минимальная и максимальная глубина, км'+'\n')
+    f.write(cnv2str(the_dict['ini_lat'], the_dict['ini_lon']) + '; начальное приближение для минимизации: широта, долгота или число - среднее по скольки широтам и долготам n-точек с максимальной I_fact'+'\n')
+    f.write(cnv2str(the_dict['ini_mag'], the_dict['ini_dep']) + '; начальное приближение для минимизации: магнитуда, глубина, км'+'\n')
+    f.close()
+
+    with open(the_dict['full_finf_name_']) as fh:
+        data = fh.read()
+
+    with open(the_dict['full_finf_name_'], 'wb') as fh:
+        fh.write(data.encode('cp1251'))
 
 def create_test1(curr_dat_dir: str, nequake: int, noise: int) -> (np.ndarray, np.ndarray, np.ndarray, float, float, str):
     """
@@ -376,7 +475,7 @@ def calc_test2_grid_write_txt(test_dict_, full_txt_fname: str, point_list: list,
             if is_view: print('k=', k, 'dep=', dep, 'mgn=', mgn)
 #  def calc_distance(lat_arr: float, lon_arr: float, h_arr: float, lat: float, lon: float, dep: float) -> float:
             dist3 = calc_distance(lat_g, lon_g, alt, lat, lon, dep)
-            i_curr_mod = macroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mgn, type_of_macro_fun_=type_of_macro_fun)
+            i_curr_mod = makroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mgn, type_of_macro_fun_=type_of_macro_fun)
             i_curr_mod = i_curr_mod if i_curr_mod>0 else 0
             if is_view: print(lat_g, lon_g, alt, lat, lon, dist3, i_curr_mod)
             sum_i = sum_i + i_curr_mod
@@ -386,7 +485,7 @@ def calc_test2_grid_write_txt(test_dict_, full_txt_fname: str, point_list: list,
         the_rand = (noise/100)*(random.random()/2)*random.choice(rand_list)
         the_sum_i = sum_i * (1 + the_rand)
         lat_arr[icurr] = lat_g; lon_arr[icurr] = lon_g; imd_arr[icurr] = the_sum_i
-        f.write('{0:9.4f} {1:9.4f} {2:8.1f} {3:8.4f} {4:6.1f} {5:7d} {6:s}\n'.format(lat_g, lon_g, alt, the_sum_i,
+        f.write('{0:9.4f} {1:9.4f} {2:8.1f} {3:8.4f} {4:6.1f} {5:7d} {6:s}\n'.format(lat_g, lon_g, alt*1000, the_sum_i,
                                                                                       di, dn, n_point_s))
         icurr += 1
     f.close()

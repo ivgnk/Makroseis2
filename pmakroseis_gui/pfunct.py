@@ -10,6 +10,52 @@ import math
 import numpy as np
 from functools import reduce
 
+#----------------- Работа с цветами, шкалами и прочее
+def calc_log_levels(dat: np.array, nlevel: int) -> list:
+    llist = []
+    mmin = np.min(dat); llist.append(mmin)
+    mmax = np.max(dat);
+    q = pow(mmax/mmin, 1.0/(nlevel-1))
+    ll = np.linspace(start=2, stop = nlevel-1, num = nlevel-2)
+    dat = mmin
+    for i in ll:
+        dat = dat*q
+        llist.append(dat)
+    llist.append(mmax)
+    return llist
+
+def rgb_to_hex(rgb):
+    # https://stackoverflow.com/questions/29643352/converting-hex-to-rgb-value-in-python
+    # rgb_to_hex((255, 255, 255))        # ==> '#ffffff'
+    return '#%02x%02x%02x' % rgb
+
+def red2blue_21colors() -> list:
+    # https://www.kite.com/python/answers/how-to-make-a-colored-scatter-plot-in-matplotlib-in-python
+    llist =[]
+    llist.append(rgb_to_hex((92,0,0)))  # 1
+    llist.append(rgb_to_hex((160,0,0))) # 2
+    llist.append(rgb_to_hex((200,0,0))) # 3
+    llist.append(rgb_to_hex((255,0,0))) # 4
+    llist.append(rgb_to_hex((255,60,60))) # 5
+    llist.append(rgb_to_hex((255,116,116))) # 6
+    llist.append(rgb_to_hex((255,148,148))) # 7
+    llist.append(rgb_to_hex((255,170,170))) # 8
+    llist.append(rgb_to_hex((255,208,208))) # 9
+    llist.append(rgb_to_hex((255,225,225))) # 10
+    llist.append(rgb_to_hex((255,255,255))) # 11
+    llist.append(rgb_to_hex((225,225,255))) # 12
+    llist.append(rgb_to_hex((208,208,255))) # 13
+    llist.append(rgb_to_hex((170,170,255))) # 14
+    llist.append(rgb_to_hex((148,148,255))) # 15
+    llist.append(rgb_to_hex((116,116,255))) # 16
+    llist.append(rgb_to_hex((60,60,255))) # 17
+    llist.append(rgb_to_hex((0,0,255))) # 18
+    llist.append(rgb_to_hex((0,0,200))) # 19
+    llist.append(rgb_to_hex((0,0,160))) # 20
+    llist.append(rgb_to_hex((0,0,92))) # 21
+    return llist
+
+#-----------------
 def list2d3_to_3nparray(ll:list) -> (np.ndarray, np.ndarray, np.ndarray):
     llen = len(ll)
     x = np.random.random(llen)
@@ -135,3 +181,13 @@ def add_2d_nparray(nparr1, dat00, dat01) -> object:
 # print(dat2_in_diap(float('nan'), float('nan'), float('nan'), float('nan'), isview=True))
 # test_2d_nparray()
 # print_format_examples()
+
+# dat = np.zeros(2)
+# dat[0] = 0.1; dat[1] = 1000;
+# llist = calc_log_levels(dat, nlevel=12)
+# for i in range(len(llist)):
+#     print(llist[i])
+
+# llist = red2blue_21colors()
+# for i in range(len(llist)):
+#     print( llist[i] )

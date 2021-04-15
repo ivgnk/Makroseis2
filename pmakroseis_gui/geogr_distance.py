@@ -1,4 +1,4 @@
-# import numpy as np
+# geogr_distance
 from math import *
 from pcoo import *
 import numba

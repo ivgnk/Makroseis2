@@ -282,21 +282,46 @@ def minimize_func(n: int, lat_arr: np.ndarray, lon_arr: np.ndarray,
 
     return num, lat_, lon_, dep_, mag_, fun_, result_list
 
-def create_str_res(name_sq, ini_lat_, ini_lon_, num, lat_, lon_, dep_, mag_, fun_) -> str:
+def create_str_res(name_sq, ini_lat_, ini_lon_, ini_dep_, ini_mag_,
+                   num, lat_, lon_, dep_, mag_, fun_) -> str:
+    as_ = ' '*5
+
+    str_res_ = '\n'
+    str_res_ += (as_+name_sq).center(45)
+    str_res_ += '\n'
+    str_res_ += '\n'
+    str_res_ += as_+'        Начальное приближение\n'
+    str_res_ += as_+'     Широта = '+format(ini_lat_,'7.3f') + '\n'
+    str_res_ += as_+'    Долгота = '+format(ini_lon_,'7.3f') + '\n'
+    str_res_ += as_+'    Глубина = '+format(ini_dep_,'7.3f') + '\n'
+    str_res_ += as_+'  Магнитуда = '+format(ini_mag_,'7.3f') + '\n'+ '\n'
+
+    str_res_ += as_+'        Выбраный результат минимизации' + '\n'
+    str_res_ += as_+'   Итерация (строка в файле результата) = ' + format(num,'>4d') + '\n'
+    str_res_ += as_+'       Широта = '+format(lat_,'7.3f') + '\n'
+    str_res_ += as_+'      Долгота = '+format(lon_,'7.3f') + '\n'
+    str_res_ += as_+'      Глубина = '+format(dep_,'7.3f') + '\n'
+    str_res_ += as_+'    Магнитуда = '+format(mag_,'7.3f') + '\n'
+    str_res_ += as_+' Значение целевой функции = '+format(fun_,'7.3f') + '\n'
+    return str_res_
+
+
+def create_str_res_calc2(name_sq, lat_, lon_, ini_mag_, ini_dep_, num, dep_, mag_, fun_) -> str:
     as_ = ' '*5
 
     str_res_ = '\n'
     str_res_ += (as_+name_sq)
     str_res_ += '\n'
     str_res_ += '\n'
+    str_res_ += as_+'     Широта = '+format(lat_,'7.3f') + '\n'
+    str_res_ += as_+'    Долгота = '+format(lon_,'7.3f') + '\n' + '\n'
+    str_res_ += '\n'
     str_res_ += as_+'        Начальное приближение\n'
-    str_res_ += as_+'     Широта = '+format(ini_lat_,'7.3f') + '\n'
-    str_res_ += as_+'    Долгота = '+format(ini_lon_,'7.3f') + '\n' + '\n'
-
+    str_res_ += as_+'      Глубина = '+format(ini_dep_,'7.3f') + '\n'
+    str_res_ += as_+'    Магнитуда = '+format(ini_mag_,'7.3f') + '\n'
+    str_res_ += '\n'
     str_res_ += as_+'        Выбраный результат минимизации' + '\n'
-    str_res_ += as_+'   Итерация (строка в файле результата) = ' + format(num,'>4d') + '\n'
-    str_res_ += as_+'       Широта = '+format(lat_,'7.3f') + '\n'
-    str_res_ += as_+'      Долгота = '+format(lon_,'7.3f') + '\n'
+    str_res_ += as_+'   Номер решения (строка в файле результата) = ' + format(num,'>4d') + '\n'
     str_res_ += as_+'      Глубина = '+format(dep_,'7.3f') + '\n'
     str_res_ += as_+'    Магнитуда = '+format(mag_,'7.3f') + '\n'
     str_res_ += as_+' Значение целевой функции = '+format(fun_,'7.3f') + '\n'

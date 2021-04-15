@@ -82,7 +82,8 @@ empty_inf_dict = dict(name_sq='',  # название площади
                       full_finf_name_='',  # имя inf-файла
                       npoint=float('nan'),  # внутреняя информация - число точек в файле *.txt или xlsx
                       typeof_input=0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt/xlsx
-                      saved_in_json=0  # 0 - текущий ввод; 1 - ввод из json
+                      saved_in_json=0,  # 0 - текущий ввод; 1 - ввод из json
+                      second_stage=False  # Вторая или нет стадия расчетов
                       )
 
 
@@ -102,7 +103,8 @@ inf_defdict = dict(name_sq='Новозаречный',  # название пл�
                    full_finf_name_='',  # имя inf-файла
                    npoint=float('nan'),  # внутреняя информация - число точек в файле *.txt или xlsx
                    typeof_input=0,  # 0 - ничего не введено, самое начало; 1 - введен inf; 2 - введен txt; 3 - введен xlsx
-                   saved_in_json=0  # 0 - текущий ввод; 1 - ввод из json
+                   saved_in_json=0,  # 0 - текущий ввод; 1 - ввод из json
+                   second_stage = False  # Вторая или нет стадия расчетов
                    )
 
 # Как я могу проверить, пуст numpy или нет?
@@ -420,7 +422,7 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
         # ind_print: bool = False
         # - Основная часть функции - сумма квадратов разностей
         dist3 = calc_distance(Lat_arr[i], Lon_arr[i], H_Arr[i], lat_, lon_, dep_)
-        Imod = macroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mag_, type_of_macro_fun_=type_of_macro_fun)
+        Imod = makroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mag_, type_of_macro_fun_=type_of_macro_fun)
         dat = (I_fact_Arr[i] - Imod)
         f_curr = pow(dat, 2)
         f = f + f_curr
@@ -483,14 +485,14 @@ def result_control(lat_: float, lon_: float, dep_: float, mag_: float) -> None:
     ii = 0
     for i in range(row):
         dist2 = calc_distance(lat_arr[i], lon_arr[i], h_arr[i], lat_, lon_, dep_)
-        imod[i] = macroseis_fun(a=a, b=b, c=c, dist=dist2, mag=mag_, type_of_macro_fun_ = type_of_macro_fun)
+        imod[i] = makroseis_fun(a=a, b=b, c=c, dist=dist2, mag=mag_, type_of_macro_fun_ = type_of_macro_fun)
         indiap = dat_in_diap(imod[i], i_left_edge[i], i_right_edge[i])
         ii = ii + int(indiap)
         print(i, ' ', indiap, '   ', i_left_edge[i], imod[i], i_right_edge[i])
     print('Всего значений в диапазоне ', ii)
 
 
-def macroseis_fun(a: float, b: float, c: float, dist: float, mag: float, type_of_macro_fun_: bool = False) -> float:
+def makroseis_fun(a: float, b: float, c: float, dist: float, mag: float, type_of_macro_fun_: bool = False) -> float:
     """
     Функция для вычисления значения интенсивности
     type_of_macro_fun_ =
@@ -511,6 +513,6 @@ def work_macroseis_fun():
     r = 9
     mag1 = 2
     mag2 = 7
-    imod1 = macroseis_fun(a=a, b=b, c=c, dist=r, mag=mag1, type_of_macro_fun_=type_of_macro_fun)
-    imod2 = macroseis_fun(a=a, b=b, c=c, dist=r, mag=mag2, type_of_macro_fun_=type_of_macro_fun)
+    imod1 = makroseis_fun(a=a, b=b, c=c, dist=r, mag=mag1, type_of_macro_fun_=type_of_macro_fun)
+    imod2 = makroseis_fun(a=a, b=b, c=c, dist=r, mag=mag2, type_of_macro_fun_=type_of_macro_fun)
     return imod1, imod2
