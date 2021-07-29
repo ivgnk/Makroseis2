@@ -18,10 +18,11 @@ from pstring import *
 from pmain_proc import *
 from tkinter import messagebox as mb
 from ptkinter_menu_proc import *
+import geogr_distance
 
 # False - простой тип макрофункци imod = a*mag_ - b*math.log10(dist2) + c
 # True - сложный тип макрофункци  imod = a*mag_ - b*math.log10(dist2 + 0.0185*pow(10, 0.43*mag_)) + c
-type_of_macro_fun = False # True
+type_of_macro_fun = True #  False
 
 test_mode = True  # тестовый режим
 makroseis_folder: str = r"Work_Lang\Python\PyCharm\Makroseis_GUI"
@@ -132,7 +133,19 @@ def get_dat_struct(num_el: int):  # извлечение данных из ст�
     b = dat_struct[num_el, 1]
     return a, b
 
-def get_Lat_Lon_ifact():
+def get_all_arrays():
+    (the_dict, the_arr) = get_dat_struct(curr_nstruct)
+    lat_arr = the_arr[:, 0]  # Lat
+    lon_arr = the_arr[:, 1]  # Lat
+    h_arr = the_arr[:, 2] # Alt
+    ifact_arr = the_arr[:, 3]
+    di = the_arr[:, 4]
+    num = the_arr[:, 5]
+    the_name = the_arr[:, 6]
+    return lat_arr, lon_arr, h_arr, ifact_arr, di, num, the_name
+
+
+def get_lat_lon_ifact():
     (the_dict, the_arr) = get_dat_struct(curr_nstruct)
     lat_arr1 = the_arr[:, 0]  # Lat
     lat_arr1list = lat_arr1.tolist()
@@ -147,6 +160,18 @@ def get_Lat_Lon_ifact():
     i_fact_arr      = np.array(i_fact_arr1list)
 
     return lat_arr, lon_arr, i_fact_arr
+
+def get_ifact_di_name():
+    (the_dict, the_arr) = get_dat_struct(curr_nstruct)
+    ifact = the_arr[:, 3]
+    di = the_arr[:, 4]
+    the_name = the_arr[:, 6]
+    return ifact, di, the_name
+
+def get_name():
+    (the_dict, the_arr) = get_dat_struct(curr_nstruct)
+    the_name = the_arr[:, 6]
+    return the_name
 
 
 def get_Lat_Lon(): # -> (np.ndarray, np.ndarray)
@@ -387,18 +412,18 @@ def input_inf(fname, is_view=False) -> (bool, object):
 
 
 # @numba.njit
-def calc_distance(lat_arr: float, lon_arr: float, h_arr: float, lat: float, lon: float, dep: float) -> float:
+def calc_distance(lat_arr: float, lon_arr: float, h_arr: float, lat: float, lon: float, dep: float) -> (float, float):
     """
     Вычисление расстояния (км) между 2 точками с заданными координатами
     h_arr, dep - в км
     """
-    len_pnt: float = calc_geogr_dist(lat_arr, lon_arr, lat, lon)
-    dat: float = math.sqrt(len_pnt**2 + (h_arr + dep)**2)
-    return dat
+    epi_len: float = calc_geogr_dist(lat_arr, lon_arr, lat, lon)
+    hypo_len: float = math.sqrt(epi_len**2 + (h_arr + dep)**2)
+    return epi_len, hypo_len
 
 
 # @numba.njit
-def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
+def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr, di_arr,
                        lat_: float, lon_: float, dep_: float, mag_: float,
                        a: float, b: float, c: float) -> float:
     """
@@ -421,12 +446,17 @@ def objective_function(n: int, Lat_arr, Lon_arr, H_Arr, I_fact_Arr,
     for i in range(n):
         # ind_print: bool = False
         # - Основная часть функции - сумма квадратов разностей
-        dist3 = calc_distance(Lat_arr[i], Lon_arr[i], H_Arr[i], lat_, lon_, dep_)
+        (epi_len, hypo_len) = calc_distance(Lat_arr[i], Lon_arr[i], H_Arr[i], lat_, lon_, dep_)
+        dist3 = hypo_len
         Imod = makroseis_fun(a=a, b=b, c=c, dist=dist3, mag=mag_, type_of_macro_fun_=type_of_macro_fun)
         dat = (I_fact_Arr[i] - Imod)
         f_curr = pow(dat, 2)
         f = f + f_curr
         #  f1 = copy.deepcopy(f)
+        # - Дополнительная штрафная функция
+        add_di_shtraf = pfunct.add_di_shtraf(Imod, I_fact_Arr[i], di_arr[i])
+        addd = lin_coeff*f_curr*add_di_shtraf
+        f = f + addd
         # - Дополнительные части функции - барьерные функции по каждой переменной
         if not dat_in_diap(lat_, min_lat_, max_lat_):
             ou_lat_ = out_of_diap1proc(lat_, min_lat_, max_lat_)
@@ -516,3 +546,65 @@ def work_macroseis_fun():
     imod1 = makroseis_fun(a=a, b=b, c=c, dist=r, mag=mag1, type_of_macro_fun_=type_of_macro_fun)
     imod2 = makroseis_fun(a=a, b=b, c=c, dist=r, mag=mag2, type_of_macro_fun_=type_of_macro_fun)
     return imod1, imod2
+
+def calc_dl_di() -> (np.ndarray, np.ndarray, np.ndarray):
+    """
+    Расчет расстояния до центра кластера точек с максимальным ifact и приращения ifact
+    """
+    if pinp_struct.curr_nstruct == -1:
+        mb.showerror(s_error, ss_fdni)
+    else:
+        (lat, lon, ifact) = pinp_struct.get_lat_lon_ifact()
+        the_name = pinp_struct.get_name()
+        ind = np.argsort(-ifact)
+        n = len(ind)
+        the_len = np.zeros(n)
+        dlen = np.zeros(n)
+        difact = np.zeros(n)
+        sort_lat = lat[ind]
+        sort_lon = lon[ind]
+        sort_ifact = ifact[ind]
+        sort_name = the_name[ind]
+        the_len[0] = 0.0
+        lat_cls = sort_lat[0]; sum_lat = sort_lat[0]
+        lon_cls = sort_lon[0]; sum_lon = sort_lon[0]
+        for i in range(n):
+            # print(format(i,'3d'), format(sort_name[i], '22s'), format(sort_lat[i],'8.4f'),
+            #       format(sort_lon[i],'8.4f'),format(sort_ifact[i],'8.4f'))
+            if i == 0:
+                dlen[i] = 0
+            else:
+                the_len[i] = geogr_distance.calc_geogr_dist(lat_cls, lon_cls, sort_lat[i], sort_lon[i])
+                sum_lat += sort_lat[i]
+                sum_lon += sort_lon[i]
+                lat_cls = sum_lat/(i+1)
+                lon_cls = sum_lon/(i+1)
+                difact[i] = abs(sort_ifact[i] - sort_ifact[i-1])
+                dlen = abs(the_len[i] - the_len[i-1])
+        return the_len, difact, sort_name
+
+def calc_lini_ifact() -> (np.ndarray, np.ndarray, np.ndarray):
+    """
+    Расчет расстояния от точки с максимальным ifact до текущей точки
+    """
+    if pinp_struct.curr_nstruct == -1:
+        mb.showerror(s_error, ss_fdni)
+    else:
+        (lat, lon, ifact) = pinp_struct.get_lat_lon_ifact()
+        the_name = pinp_struct.get_name()
+        ind = np.argsort(-ifact)
+        n = len(ind)
+        the_len = np.zeros(n)
+        sort_lat = lat[ind]
+        sort_lon = lon[ind]
+        sort_ifact = ifact[ind]
+        sort_name = the_name[ind]
+        the_len[0] = 0.0
+        for i in range(n):
+            if i == 0:
+                the_len[i] = 0
+            else:
+                the_len[i] = geogr_distance.calc_geogr_dist(sort_lat[0], sort_lon[0], sort_lat[i], sort_lon[i])
+        return the_len, sort_ifact, sort_name
+
+

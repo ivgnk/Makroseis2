@@ -15,6 +15,7 @@ import pfunct
 import pathlib
 import copy
 import geogr_distance
+import pinp_struct
 from pinp_struct import *
 from math import *
 
@@ -27,8 +28,83 @@ def calc_dist_onsurf(latP: float, lonP:float, lat_arr:np.ndarray, lon_arr:np.nda
         distarr[i] = r
     return distarr
 
+def in_the_circle(dist_onsurf: np.ndarray, radius: float) -> (np.ndarray, int):
+    n = range(len(dist_onsurf))
+    in_circle = np.array(n, dtype = bool)
+    the_exist: int = 0
+    for i in n:
+        in_circle[i] = (dist_onsurf[i] <= radius)
+        if in_circle[i]:
+            the_exist = the_exist + 1
+    return in_circle, the_exist
+
+def calc_dist_onsurf_full(lat: float, lon: float, lat_arr: np.ndarray, lon_arr: np.ndarray) -> np.ndarray:
+    dist_onsurf = calc_dist_onsurf(lat, lon, lat_arr, lon_arr)
+    return dist_onsurf
+
+def calc_second_stage2(base_dict_: dict) -> (np.ndarray, float, float, float, float, int, int, int, np.ndarray, np.ndarray, np.ndarray, int, str):
+    # Расчет глубин только с учетом точек в радиусе 30 км
+    step_ = 0.1  # шаг изменения для глубин и магнитуд
+    ndep = round((base_dict_['max_dep'] - base_dict_['min_dep'])/step_ + 1)
+    nmag = round((base_dict_['max_mag'] - base_dict_['min_mag'])/step_ + 1)
+
+    iini_mag = round(base_dict_['ini_mag'], 1)
+    iini_dep = round(base_dict_['ini_dep'], 1)
+
+    the_arr = pinp_struct.dat_struct[pinp_struct.curr_nstruct, 1]
+    n = len(the_arr)
+    lat_arr = the_arr[:, 0]
+    lon_arr = the_arr[:, 1]
+    alt_arr = the_arr[:, 2]/1000
+    ifact_arr = the_arr[:, 3]
+    dist_onsurf = calc_dist_onsurf(base_dict_['ini_lat'], base_dict_['ini_lon'], lat_arr, lon_arr)
+    #---------------
+    radius = 30
+    (in_circle, the_exist) = in_the_circle(dist_onsurf, radius)  # входят ли точки в круг радиуса 30 км
+    if the_exist == 0:
+        radius = 1_000_000
+    #---------------
+    dist_onsurf2 = dist_onsurf*dist_onsurf
+    res_matr = np.zeros((ndep, nmag), dtype=float)
+    arr_dep = np.zeros(ndep*nmag, dtype=float)
+    arr_mag = np.zeros(ndep*nmag, dtype=float)
+    res_matr_lin = np.zeros(ndep*nmag, dtype=float)
+    min_sum = 1e308; dep_ = -13.0; mag_ = -13.0;
+    curr_i:int = 0
+    for i in range(ndep):
+        curr_dep = base_dict_['min_dep']+i*step_
+        for j in range(nmag):
+            curr_mag = base_dict_['min_mag']+j*step_
+            ssum = 0.00001
+
+            for k in range(n):
+                if dist_onsurf[k]<radius: # входят ли точки в круг радиуса 30 км
+                    dist = sqrt(dist_onsurf2[k] + (alt_arr[k]+curr_dep)**2)
+                    imod = pinp_struct.makroseis_fun(base_dict_['a'], base_dict_['b'], base_dict_['c'], dist, curr_mag, pinp_struct.type_of_macro_fun)
+                    ssum = ssum + (imod-ifact_arr[k])**2
+            res_matr[i, j] = ssum
+            res_matr_lin[curr_i] = ssum
+            arr_dep[curr_i] = curr_dep
+            arr_mag[curr_i] = curr_mag
+            if ssum < min_sum:
+                min_sum = ssum
+                dep_ = curr_dep
+                mag_ = curr_mag
+                min_i = curr_i
+
+            if (abs(iini_mag - curr_mag)<1e-10) and (abs(iini_dep - curr_dep)<1e-10):
+                min_icorrect = curr_i
+                min_sum_correct = ssum
+            curr_i = curr_i + 1
+    # --- Корректировка результата
+    dat = (min_sum_correct-min_sum)/min_sum*100
+    info_str = 'Разница между минимальным значением и выбранным значением ' + str(round(dat,2))+'%'
+    #     (np.ndarray, float, float, float, int,      int,    np.ndarray, np.ndarray, np.ndarray, int)
+    return res_matr, min_sum, min_sum_correct, dep_, mag_, curr_i, min_i, min_icorrect, arr_dep, arr_mag, res_matr_lin, the_exist, info_str
+
 
 def calc_second_stage(base_dict_: dict) -> (np.ndarray, float, float, float, int, np.ndarray, np.ndarray, np.ndarray):  # -> (float, float, float, float, int, list):
+    # Для тестирования
     step_ = 0.1  # шаг изменения для глубин и магнитуд
     ndep = round((base_dict_['max_dep'] - base_dict_['min_dep'])/step_ + 1)
     nmag = round((base_dict_['max_mag'] - base_dict_['min_mag'])/step_ + 1)
@@ -71,8 +147,8 @@ def create_2stage_dict(base_dict_: dict, res_list: list, res_choice_n: int) -> d
     Создание словаря для inf-файла второй стадии минимизации
     """
     llist = res_list[res_choice_n]
-    lat = round(llist[0], 5)
-    lon = round(llist[1], 5)
+    lat = llist[0] # round(llist[0], 5)
+    lon = llist[1] # round(llist[1], 5)
     # print(lat, ' ', lon)
     base_dict = copy.deepcopy(base_dict_)
     base_dict['finf_name_'] = 'st2_'+base_dict['finf_name_']

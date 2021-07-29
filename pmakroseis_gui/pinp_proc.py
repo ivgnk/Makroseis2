@@ -69,8 +69,6 @@ import pmain_proc
 
 # https://ru.stackoverflow.com/questions/320292/Проблема-с-заменой-слеша-в-пути-на-python
 
-
-# txt_input работает, когда inf_input = False
 def prepare_input_filename(inf_input: bool, txt_input: bool, is_view: bool = False) -> (str, str):
     """
     Подготовка имени excel-файла к вводу данных из excel-файла
@@ -121,7 +119,9 @@ def prepare_input_filename(inf_input: bool, txt_input: bool, is_view: bool = Fal
     return full_file_name, full_res_file_name
 # --------------- def prepare_datinput_filename()
 
-def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -> object:
+
+
+def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -> (object, bool):
     """
     Чтение файла и  запись его в numpy.array
     """
@@ -140,6 +140,8 @@ def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -
         all_lines[i] = s.strip()
         # print(i, all_lines[i])
 
+    if not str_list_control(all_lines, ncol1):
+        return None, False
     if is_view: print('Введено строк из текстового файла = ', nrow1)
     numpy_arr = np.zeros((nrow1 - 1, ncol), dtype=object)  # первую строку заголовков не вводим
     for i in range(nrow1):
@@ -156,12 +158,12 @@ def the_txt_importdat(txt_file_name: str, is_view: bool, ncol: int = ncol_tes) -
             if len(part_lines) > ncol1:  # название состоит из 2 и более частей, в последней части остаток
                 numpy_arr[i - 1, 6] = numpy_arr[i - 1, 6]+' '+str(part_lines[7])
     if is_view: view_2d_array(numpy_arr, nrow1 - 1, ncol1, '2d массив NumPy заполнен из строк')
-    return numpy_arr
+    return numpy_arr, True
 # --------------- def the_txt_import()
 
 
 def the_xls_importdat(xls_file_name: str, is_view: bool, test_dat: bool = False, testnrow: int = nrow_testf,
-                      testncol: int = ncol_tes) -> object:
+                      testncol: int = ncol_tes) -> (object, bool):
     """
     ВВод данных из excel-файла
     образец файл: Dat\точки_ввод.xlsx
@@ -187,6 +189,8 @@ def the_xls_importdat(xls_file_name: str, is_view: bool, test_dat: bool = False,
         nrow = testnrow;         ncol = testncol
     else:
         nrow = my_sheet.max_row;    ncol = my_sheet.max_column
+    if my_sheet.max_column < testncol:
+        return None, False
 
     numpy_arr = np.zeros((nrow-1, ncol), dtype=object)  # первую строку заголовков не вводим
     if is_view:   view_2d_array(numpy_arr, nrow-1, ncol, '2d массив NumPy создан')
@@ -197,7 +201,7 @@ def the_xls_importdat(xls_file_name: str, is_view: bool, test_dat: bool = False,
                 numpy_arr[i-1, j] = my_sheet.cell(row=i+1, column=j+1).value           # первую строку заголовков не вводим
     # if the_view:  view_2d_array(numpy_arr, nrow - 1, ncol, '2d массив NumPy заполнен')
     if is_view:  view_2d_array(numpy_arr, nrow - 1, ncol, '2d массив NumPy заполнен')
-    return numpy_arr
+    return numpy_arr, True
 # --------------- def the_xls_import()
 
 
@@ -246,7 +250,7 @@ def view_type2d_array(arr, nrow: int, ncol: int, test_info: str='') -> None:
         print()
 
 
-def the_input_dat(file_dat_name: str, is_view: bool = False) -> object:
+def the_input_dat(file_dat_name: str, is_view: bool = False) -> (object, bool):
     """
     Общая функция ввода
     Как получить дату и время создания файла в Python
@@ -258,10 +262,10 @@ def the_input_dat(file_dat_name: str, is_view: bool = False) -> object:
     # print(get_file_time(filename))
     ext: str = gfe(file_dat_name)  # расширение с точкой в нижнем регистре
     if ext == '.txt':
-        numpy_arr = the_txt_importdat(file_dat_name, is_view)
+        (numpy_arr, res_input) = the_txt_importdat(file_dat_name, is_view)
     else:
-        numpy_arr = the_xls_importdat(file_dat_name, is_view)  # ввели данные
-    return numpy_arr
+        (numpy_arr, res_input) = the_xls_importdat(file_dat_name, is_view)  # ввели данные
+    return numpy_arr, res_input
 
 
 def get_file_time(fname: str, thetest: bool = False) -> str:
@@ -278,7 +282,7 @@ def get_file_time(fname: str, thetest: bool = False) -> str:
     return beauty_time1
 
 
-def the_input(fname: str, res_dir: str, is_view: bool) -> (bool, object):
+def the_input_inf_and_dat(fname: str, res_dir: str, is_view: bool) -> (bool, object):
     (good_end, thecurr_dict) = input_inf(fname, is_view)
     if not good_end:
         mb.showerror(s_error, ss_fifnf)  # 'inf - файл не найден'
@@ -290,8 +294,11 @@ def the_input(fname: str, res_dir: str, is_view: bool) -> (bool, object):
         else:
             fdat_name = name_and_ext(thecurr_dict["work_dir"], thecurr_dict["fdat_name_"])
             if is_view: print('fdat_name = ', fdat_name)
-            numpy_arr = the_input_dat(fdat_name, is_view)
-# ndarray.shape - размеры массива, его форма. Это кортеж натуральных чисел, показывающий длину массива по каждой оси.
+            (numpy_arr, good_end) = the_input_dat(fdat_name, is_view)
+            if not good_end:
+                mb.showerror(s_error, ss_fedf+'\n'+ss_fedf_nac)  # 'Ошибки в файле данных'
+                return False, None
+            # ndarray.shape - размеры массива, его форма. Это кортеж натуральных чисел, показывающий длину массива по каждой оси.
 # Для матрицы из n строк и m столбов, shape будет (n,m).
             (row, col) = np.shape(numpy_arr)
             if is_view: print(row, col)
@@ -332,7 +339,10 @@ def the_input_test(fname: str, res_dir: str, is_view: bool) -> (bool, dict, np.n
         else:
             fdat_name = name_and_ext(thecurr_dict["work_dir"], thecurr_dict["fdat_name_"])
             if is_view: print('fdat_name = ', fdat_name)
-            numpy_arr = the_input_dat(fdat_name, is_view)
+            (numpy_arr, res_input) = the_input_dat(fdat_name, is_view)
+            if not res_input:
+                mb.showerror(s_error, ss_fedf+'\n'+ss_fedf_nac)  #  Ошибки в файле данных
+                return False, None
             (row, col) = np.shape(numpy_arr)
             if is_view: print(row, col)
             thecurr_dict["npoint"] = row
@@ -363,8 +373,8 @@ def prc(row: int, col: int) -> None:  # для проверки печать с�
     print('   row = ', row)
     print('column = ', col)
 
-
 def create_log_filename(resdir: str, inf_file_name) -> str:
-    fn = gfn(inf_file_name) + '_res.xlsx'
+    fn = gfn(inf_file_name) + '_pointlist.xlsx'
     s = "\\".join([resdir, fn])
     return s
+

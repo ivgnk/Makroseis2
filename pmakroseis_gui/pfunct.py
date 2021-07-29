@@ -10,6 +10,49 @@ import math
 import numpy as np
 from functools import reduce
 
+def calc_ticks(min_d: float, max_d: float, step_d: float) -> np.ndarray:
+    curr_d = min_d; n_curr = 1
+    while curr_d<max_d:
+        curr_d = curr_d + step_d
+        n_curr = n_curr + 1
+    # if not (abs(curr_d-max_d) < 1e-8):
+    #     curr_d = curr_d + step_d
+    #     n_curr = n_curr + 1
+    x = np.linspace(min_d, curr_d, n_curr)
+    return x
+
+
+def get_xls_bool(b: bool) -> str:
+    if b:
+        s = 'ИСТИНА'
+    else:
+        s = 'ЛОЖЬ'
+    return s
+
+def numpy_calc_average_n(a: np.ndarray, n:int) -> float:
+    """
+    Расчет среднего для заданного числа точек
+    """
+    sum = 0.0
+    for i in range(n):
+        sum = sum + a[i]
+    aver = sum/n
+    return aver
+
+
+def str_list_control(str_list: list, min_col_: int) -> bool:
+    """
+    Контроль числа слов в списке строк
+    Должно быть не меньше min_col_ слов
+    """
+    n = len(str_list)
+    for i in range(n):
+        currstr = str_list[i]
+        part_lines = currstr.split(maxsplit=min_col_)
+        if len(part_lines) < min_col_:
+            return False
+    return True
+
 #----------------- Работа с цветами, шкалами и прочее
 def calc_log_levels(dat: np.array, nlevel: int) -> list:
     llist = []
@@ -56,17 +99,30 @@ def red2blue_21colors() -> list:
     return llist
 
 #-----------------
-def list2d3_to_3nparray(ll:list) -> (np.ndarray, np.ndarray, np.ndarray):
+def add_di_shtraf(imod: float, ifact: float, di: float) -> float:
+    dat = abs(imod - ifact)
+    if dat < 0.5*di:
+        k = 0
+    elif ((dat>= 0.5*di) and (dat<1*di)):
+        k = 1
+    else:
+        k = 2
+    return k*dat
+
+#-----------------
+def list2d3_to_3nparray(ll:list) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray):
     llen = len(ll)
     x = np.random.random(llen)
     y = np.random.random(llen)
     z = np.random.random(llen)
+    name1 = np.ndarray(llen, dtype=object)
     for i in range(llen):
         d = ll[i]
         x[i] = d[0]
         y[i] = d[1]
         z[i] = d[2]
-    return x, y, z
+        name1[i] = d[4]
+    return x, y, z, name1
 
 
 def out_of_diap2(dat, dat_min, dat_max) -> (float, float):
@@ -191,3 +247,10 @@ def add_2d_nparray(nparr1, dat00, dat01) -> object:
 # llist = red2blue_21colors()
 # for i in range(len(llist)):
 #     print( llist[i] )
+
+# str_bad_list = ['1',' 1  2', '1 2 3', '1  2  3']
+# str_good_list = [' 1  2  3 ',' 4  5 6', '  7 8  9']
+# print(str_list_control(str_bad_list, 3))
+# print(str_list_control(str_good_list, 3))
+
+# print(calc_ticks(0, 197, 50))
